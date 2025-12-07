@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
 project(QGeoView LANGUAGES C CXX)
 
-set(CMAKE_PREFIX_PATH "C:/Qt/6.8.2/mingw_64/lib/cmake")
+# Если не найден mingw_64 cmake
+# set(CMAKE_PREFIX_PATH "C:/Qt/6.8.2/mingw_64/lib/cmake")
 
 find_package(GDAL CONFIG)
 
