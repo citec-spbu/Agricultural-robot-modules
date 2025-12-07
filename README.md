@@ -55,5 +55,3 @@
 ## License
 
 This project uses the [QGeoView library](https://github.com/AmonRaNet/QGeoView), which is licensed under the [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.html).
-
-The code in this repository is licensed under the MIT license, except for the `QGeoView` library, which is licensed under the LGPL v3.0.
