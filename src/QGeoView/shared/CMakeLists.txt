@@ -20,7 +20,6 @@ find_package(Qt${QT_VERSION} REQUIRED COMPONENTS
     Network
 )
 
-# Создание динамической библиотеки (замена STATIC на SHARED)
 add_library(qgeoview-samples-shared SHARED
     helpers.cpp
     helpers.h
