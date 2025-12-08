@@ -1,6 +1,7 @@
 #pragma once
 #include "Contour.h"
 #include "ObservaionsLayer.h"
+#include "ContourPreviewDialog.h"
 
 #include <QWidget>
 #include <QGroupBox>
@@ -69,6 +70,11 @@ public:
 protected:
     inline void addObservation(const QJsonObject& RobotData);
 
+    std::optional<QGV::GeoPos> segmentIntersection(const QGV::GeoPos& a, const QGV::GeoPos& b,
+                                                   const QGV::GeoPos& c, const QGV::GeoPos& d);
+
+    QVector<QGV::GeoPos> polygonSelfIntersections(const QVector<QGV::GeoPos>& points);
+
     void addMlResults(const QJsonObject& MlResults);
 
     inline void clearMainLayer(){ if(mLayer) mLayer->deleteItems(); }
@@ -106,6 +112,7 @@ private:
     ObservationsLayer* mObservationLayer = nullptr;
 
     Contour* mContour = nullptr;
+    ContourPreviewDialog* mPrevDialog = nullptr;
 
     QVector<QGV::GeoPos> mRoutePoints;
     QVector<QGV::GeoPos> mRobotRoutePoints;

@@ -14,9 +14,9 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QEvent>
-
 #include <helpers.h>
 #include <rectangle.h>
+#include <optional>
 
 #include <QGeoView/QGVLayerOSM.h>
 #include <QGeoView/QGVDrawItem.h>
@@ -88,10 +88,10 @@ GeoViewWidget::GeoViewWidget(QWidget* parent)
         mMap->cameraTo(QGVCameraActions(mMap).scaleTo(targetArea()));
     });
 
-           // Загрузка изображений
+    // Загрузка изображений
     preloadImages();
 
-           // Подключение к событию клика на карту
+    // Подключение к событию клика на карту
     connect(mMap, &QGVMap::mapMousePress, this, [this](QPointF projPos) {
         QGV::GeoPos geoPos = mMap->getProjection()->projToGeo(projPos);
         mObservationLayer->handleMapClick(geoPos);
@@ -105,6 +105,7 @@ GeoViewWidget::GeoViewWidget(QWidget* parent)
 
 GeoViewWidget::~GeoViewWidget()
 {
+    clearAll();
 }
 
 QGV::GeoRect GeoViewWidget::targetArea() const
@@ -291,14 +292,59 @@ void GeoViewWidget::loadImage(QImage& dest, QUrl url)
     qgvDebug() << "request" << url;
 }
 
+std::optional<QGV::GeoPos> GeoViewWidget::segmentIntersection(const QGV::GeoPos& a, const QGV::GeoPos& b,
+                                                              const QGV::GeoPos& c, const QGV::GeoPos& d)
+{
+    double x1 = a.longitude(), y1 = a.latitude();
+    double x2 = b.longitude(), y2 = b.latitude();
+    double x3 = c.longitude(), y3 = c.latitude();
+    double x4 = d.longitude(), y4 = d.latitude();
+
+    double denom = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4);
+    if (denom == 0.0)
+        return std::nullopt; // параллельные или совпадающие
+
+    double px = ((x1*y2 - y1*x2)*(x3-x4) - (x1-x2)*(x3*y4 - y3*x4)) / denom;
+    double py = ((x1*y2 - y1*x2)*(y3-y4) - (y1-y2)*(x3*y4 - y3*x4)) / denom;
+
+    auto onSegment = [](double p, double q1, double q2) {
+        return (p >= std::min(q1,q2) - 1e-9) && (p <= std::max(q1,q2) + 1e-9);
+    };
+
+    if (onSegment(px, x1, x2) && onSegment(px, x3, x4) &&
+        onSegment(py, y1, y2) && onSegment(py, y3, y4))
+        return QGV::GeoPos(py, px);
+
+    return std::nullopt;
+}
+
+QVector<QGV::GeoPos> GeoViewWidget::polygonSelfIntersections(const QVector<QGV::GeoPos>& points)
+{
+    QVector<QGV::GeoPos> intersections;
+    size_t n = points.size();
+    if (n < 4) return intersections;
+
+    for (size_t i = 0; i < n-1; ++i) {
+        for (size_t j = i+1; j < n-1; ++j) {
+            // не проверяем соседние сегменты и первый-последний
+            if (j == i+1) continue;
+            if (i == 0 && j == n-2) continue;
+
+            auto pt = segmentIntersection(points[i], points[i+1], points[j], points[j+1]);
+            if (pt)
+                intersections.push_back(*pt);
+        }
+    }
+
+    return intersections;
+}
+
+
 void GeoViewWidget::addContour()
 {
     QString fileName = QFileDialog::getOpenFileName(this, "Выберите файл GeoJSON", "", "*.geojson");
     if (fileName.isEmpty())
         return;
-    else if(mContour)
-        mContour->clear();
-
 
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -368,14 +414,25 @@ void GeoViewWidget::addContour()
         if (points.isEmpty())
             continue;
 
-        mContour = new Contour(mMap);
-
         const auto& a = points.first();
         const auto& b = points.last();
 
         double eps = 1e-7;
         if (std::abs(a.latitude() - b.latitude()) > eps || std::abs(a.longitude() - b.longitude()) > eps)
             points.push_back(a);
+
+        QVector<QGV::GeoPos> intersections = polygonSelfIntersections(points);
+
+        if (!intersections.empty()) {
+            mPrevDialog = new ContourPreviewDialog(points, intersections, this);
+            mPrevDialog->exec();
+            return;
+        }
+
+        if(mContour)
+            mContour->clear();
+
+        mContour = new Contour(mMap);
 
         mContour->setPoints(points);
 
@@ -431,8 +488,6 @@ QVector<QGV::GeoPos> GeoViewWidget::buildRouteWithAngle(double stepMeters,
 
     QVector<QVector<QGV::GeoPos>> finalLines;
 
-           // Смещаем старт цикла на offsetFromContour от minProj
-           // При этом не выходим за maxProj
     double startP = minProj + offsetFromContour;
     if (startP > maxProj)
         return {};  // ничего строить, если сдвиг больше максимума
@@ -608,7 +663,6 @@ void GeoViewWidget::drawRoute(
     if (!mRouteLayer)
         return;
 
-    // TODO: пофиксить достроение пути (сейчас для каждой новой точки путь перерисовывается)
     if (!replaceExisting)
         layer->deleteItems();
 
@@ -1038,6 +1092,12 @@ void GeoViewWidget::clearAll()
     if(mContour) mContour->clear();
 
     if(mInfoList) mInfoList->clear();
+
+    if(mPrevDialog)
+    {
+        delete mPrevDialog;
+        mPrevDialog = nullptr;
+    };
 
     updateInfoList();
 
