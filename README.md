@@ -72,29 +72,22 @@ http://127.0.0.1:8000 (можно заменить в config)
 #### Request JSON
 ```bash
 {
-    "image":"https://example.com/image.jpg",
-    "metadata":{
-        "user":"test",
-        "other_info":123
-        }
+  "latitude": ...,
+  "longitude": ...,
+  "rotation_angle": ...,
+  "img_base64": "<base64_string>"
 }
 ```
 
 #### Response JSON
 ```bash
 {
-    "task_id":"8a5a8b53-924d-4938-8c8c-f89b8f10fe9f",
-    "result":{
-        "objects":["example_object"],
-        "data":{
-            "image":"https://example.com/image.jpg",
-            "metadata":{
-                "user":"test",
-                "other_info":123
-            }
-        }
+        "task_id": task_id,
+        "latitude": result["latitude"],
+        "longitude": result["longitude"],
+        "rotation_angle": result["rotation_angle"],
+        "ml_result_base64": result["ml_result_base64"]
     }
-}
 ```
 
 ### 2. Рекомендации по удобрениям
