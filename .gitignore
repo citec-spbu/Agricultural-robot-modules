@@ -1,0 +1,22 @@
+# virtual environment
+venv/
+ENV/
+.venv/
+
+# python cache
+__pycache__/
+*.pyc
+
+# YOLO outputs
+runs/
+*.pt
+
+# dataset: large training data not uploaded
+dataset/images/train/
+dataset/images/val/
+dataset/labels/train/
+dataset/labels/val/
+*.cache
+
+# logs
+*.log
