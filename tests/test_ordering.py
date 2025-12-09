@@ -1,25 +1,19 @@
 import asyncio
 import pytest
 import httpx
-import base64
-
-
-def tiny_png_base64() -> str:
-    png_bytes = (
-        b'\x89PNG\r\n\x1a\n'
-        b'\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01'
-        b'\x08\x06\x00\x00\x00\x1f\x15\xc4\x89'
-        b'\x00\x00\x00\nIDATx\x9cc`\x00\x00\x00\x02\x00\x01'
-        b'\xe2!\xbc3\x00\x00\x00\x00IEND\xaeB`\x82'
-    )
-    return base64.b64encode(png_bytes).decode("utf-8")
+from tests.test_basic_endpoints import tiny_png_base64
 
 
 @pytest.mark.asyncio
 async def test_order_of_100_requests(base_url="http://127.0.0.1:8000"):
     async with httpx.AsyncClient(timeout=60) as client:
         async def call(i):
-            payload = {"image": tiny_png_base64(), "metadata": {"i": i}}
+            payload = {
+                "latitude": 50.0 + i * 0.001,
+                "longitude": 30.0 + i * 0.001,
+                "rotation_angle": 0.0,
+                "img_base64": tiny_png_base64()
+            }
             r = await client.post(f"{base_url}/detect/", json=payload)
             return i, r.status_code
 
@@ -29,4 +23,4 @@ async def test_order_of_100_requests(base_url="http://127.0.0.1:8000"):
         assert len(ok) == N
 
         order_ok = all(ok[i] < ok[i + 1] for i in range(len(ok) - 1))
-        assert order_ok
+        assert order_ok, "Responses came out of order!"

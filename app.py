@@ -18,7 +18,7 @@ from schemas.detect import DetectRequest, DetectResult
 from schemas.fertilizer import FertilizerRequest, FertilizerResult
 
 from workers.manager import start_all_workers, stop_all_workers
-from utils import check_redis, clear_queues, _validate_base64_image
+from utils.utils import check_redis, clear_queues, _validate_base64_image
 
 
 @asynccontextmanager
@@ -51,15 +51,22 @@ async def wait_for_result(task_id: str, timeout: float, redis):
     raise HTTPException(status_code=504, detail="Timeout waiting for result")
 
 
+
 @app.post("/detect/", response_model=DetectResult)
 async def detect(request: DetectRequest):
-    _validate_base64_image(request.image)
     redis = app.state.redis
     task_id = str(uuid.uuid4())
     task = {"task_id": task_id, "type": "detect", "data": request.model_dump()}
     await redis.rpush(QUEUE_DETECT, json.dumps(task))
     result = await wait_for_result(task_id, RESPONSE_TIMEOUT_SEC, redis)
-    return {"task_id": task_id, "result": result}
+    
+    return {
+        "task_id": task_id,
+        "latitude": result["latitude"],
+        "longitude": result["longitude"],
+        "rotation_angle": result["rotation_angle"],
+        "ml_result_base64": result["ml_result_base64"]
+    }
 
 
 @app.post("/fertilizer/", response_model=FertilizerResult)

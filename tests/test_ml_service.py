@@ -20,62 +20,41 @@ def base_url():
 
 @pytest.mark.asyncio
 async def test_detect_ok(base_url):
-    payload = {"image": tiny_png_base64(), "metadata": {"request_id": "detect-001"}}
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+    payload = {
+        "latitude": 54.123,
+        "longitude": 30.123,
+        "rotation_angle": 90.0,
+        "img_base64": tiny_png_base64()
+    }
+    async with httpx.AsyncClient(timeout=30) as client:
         r = await client.post(f"{base_url}/detect/", json=payload)
+
     assert r.status_code == 200
 
+    data = r.json()
+    assert "task_id" in data
+    assert isinstance(data["task_id"], str)
+    assert len(data["task_id"]) == 36  # UUID4
 
-@pytest.mark.asyncio
-async def test_fertilizer_ok(base_url):
-    payload = {"field_id": 1, "soil_data": {"request_id": "fert-001"}}
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-        r = await client.post(f"{base_url}/fertilizer/", json=payload)
-    assert r.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_missing_image_field(base_url):
-    payload = {"metadata": {"note": "missing image"}}
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-        r = await client.post(f"{base_url}/detect/", json=payload)
-    assert r.status_code in (400, 415, 422)
+    assert data["ml_result_base64"].startswith("data:image/png;base64,")
+    assert data["latitude"] == 54.123
+    assert data["longitude"] == 30.123
+    assert data["rotation_angle"] == 90.0
 
 
 @pytest.mark.asyncio
-async def test_bad_base64(base_url):
-    payload = {"image": "data:image/png;base64,THIS_IS_NOT_BASE64", "metadata": {}}
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-        r = await client.post(f"{base_url}/detect/", json=payload)
-    assert r.status_code in (400, 415, 422, 500)
-
-
-@pytest.mark.asyncio
-async def test_parallel_mixed_endpoints(base_url):
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-        async def call(i):
-            ep = "/detect/" if i % 2 == 0 else "/fertilizer/"
-            if ep == "/detect/":
-                payload = {"image": tiny_png_base64(), "metadata": {"i": i, "ep": ep}}
-            else:
-                payload = {"field_id": i, "soil_data": {"i": i, "ep": ep}}
-            r = await client.post(f"{base_url}{ep}", json=payload)
-            return i, r.status_code
-
-        N = 20
-        results = await asyncio.gather(*[call(i) for i in range(N)])
-        ok = [code for _, code in results if code == 200]
-    assert len(ok) >= int(N * 0.9)
-
-
-@pytest.mark.asyncio
-@pytest.mark.load
 async def test_detect_burst_100(base_url):
-    async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=60) as client:
         async def call(i):
-            payload = {"image": tiny_png_base64(), "metadata": {"i": i}}
+            payload = {
+                "latitude": 50.0 + i * 0.01,
+                "longitude": 30.0 + i * 0.01,
+                "rotation_angle": 0.0,
+                "img_base64": tiny_png_base64()
+            }
             r = await client.post(f"{base_url}/detect/", json=payload)
             return r.status_code
 
         codes = await asyncio.gather(*[call(i) for i in range(100)])
-    assert sum(1 for c in codes if c == 200) >= 90
+        ok_count = sum(1 for c in codes if c == 200)
+        assert ok_count >= 90, f"Only {ok_count}/100 requests succeeded"

@@ -1,12 +1,16 @@
-from typing import Optional
+# schemas/detect.py
 from pydantic import BaseModel
-
+from typing import Optional
 
 class DetectRequest(BaseModel):
-    image: str  # ссылка на изображение или путь к файлу
-    metadata: Optional[dict] = None  # Доп. данные
-
+    latitude: float
+    longitude: float
+    rotation_angle: float
+    img_base64: str
 
 class DetectResult(BaseModel):
-    task_id: str  # Id задачи
-    result: dict  # Результат (авто конвертация в JSON через FastApi)
+    task_id: str
+    latitude: float
+    longitude: float
+    rotation_angle: float
+    ml_result_base64: str
