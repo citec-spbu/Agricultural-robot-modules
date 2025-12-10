@@ -1,14 +1,14 @@
 #include <QCoreApplication>
-#include "src/network/Base.h"
-#include "src/network/Tcp.h"
-#include "src/network/Udp.h"
-#include "src/network/Http.h"
-
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+
+#include "protocols/Base.h"
+#include "protocols/Http.h"
+#include "protocols/Tcp.h"
+#include "protocols/Udp.h"
 
 int main(int argc, char *argv[]) {
     QCoreApplication app(argc, argv);

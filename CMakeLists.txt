@@ -8,19 +8,18 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Network)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Network Widgets Sql)
 
-add_library(net
-        src/network/Base.h
-        src/network/Tcp.cc
-        src/network/Udp.cc
-        src/network/Http.cc
-)
-target_include_directories(net PUBLIC include)
-target_link_libraries(net PUBLIC Qt6::Core Qt6::Network)
 
-add_executable(client main.cpp)
-target_link_libraries(client PRIVATE net Qt6::Core Qt6::Network)
+add_subdirectory(src/network)
 
-add_executable(server src/server.cpp)
-target_link_libraries(server PRIVATE net Qt6::Core Qt6::Network net)
+add_subdirectory(src/database)
+
+add_subdirectory(src/QGeoView/lib)
+add_subdirectory(src/QGeoView/shared)
+add_subdirectory(src/QGeoView/Map)
+
+
+add_subdirectory(src/app)
+
+
