@@ -119,20 +119,32 @@ QGroupBox* GeoViewWidget::createOptionsList()
     groupBox->setLayout(new QVBoxLayout);
 
     {
+        QPushButton* button = new QPushButton("Задать начальную позицию робота");
+        groupBox->layout()->addWidget(button);
+
+        connect(button, &QPushButton::clicked, this, [this]() {
+            addRobotOnMapFromJson(TEST_JSON);
+
+            QTimer::singleShot(100, this, [this]() {
+                if (!mRobotItem.item) return;
+
+                mMap->cameraTo(QGVCameraActions(mMap).moveTo(mRobotItem.pos));
+
+                QTimer::singleShot(50, this, [this]() {
+                    auto zoomWidget = mMap->findChild<QGVWidgetZoom*>();
+                    if (zoomWidget) {
+                        zoomWidget->minus();
+                    }
+                });
+            });
+        });
+    }
+
+    {
         QPushButton* button = new QPushButton("Добавить контур (GeoJson)");
         groupBox->layout()->addWidget(button);
 
         connect(button, &QPushButton::clicked, this, &GeoViewWidget::addContour);
-    }
-
-    {
-        QPushButton* button = new QPushButton("Указать маршрут вручную");
-        groupBox->layout()->addWidget(button);
-
-        connect(button, &QPushButton::clicked, this, [this, button](){
-            toggleManualRouteMode();
-            button->setText(mManualRouteMode ? "Завершить построение маршрута" : "Указать маршрут вручную");
-        });
     }
 
     {
@@ -144,6 +156,16 @@ QGroupBox* GeoViewWidget::createOptionsList()
             showRobotCommandsJson();
 
             qDebug() << "Маршрут и команды обновлены.";
+        });
+    }
+
+    {
+        QPushButton* button = new QPushButton("Указать маршрут вручную");
+        groupBox->layout()->addWidget(button);
+
+        connect(button, &QPushButton::clicked, this, [this, button](){
+            toggleManualRouteMode();
+            button->setText(mManualRouteMode ? "Завершить построение маршрута" : "Указать маршрут вручную");
         });
     }
 
@@ -189,28 +211,6 @@ QGroupBox* GeoViewWidget::createOptionsList()
             }
 
             delete jsonDoc;
-        });
-    }
-
-    {
-        QPushButton* button = new QPushButton("Задать начальную позицию робота");
-        groupBox->layout()->addWidget(button);
-
-        connect(button, &QPushButton::clicked, this, [this]() {
-            addRobotOnMapFromJson(TEST_JSON);
-
-            QTimer::singleShot(100, this, [this]() {
-                if (!mRobotItem.item) return;
-
-                mMap->cameraTo(QGVCameraActions(mMap).moveTo(mRobotItem.pos));
-
-                QTimer::singleShot(50, this, [this]() {
-                    auto zoomWidget = mMap->findChild<QGVWidgetZoom*>();
-                    if (zoomWidget) {
-                        zoomWidget->minus();
-                    }
-                });
-            });
         });
     }
 
