@@ -79,7 +79,7 @@ protected:
 
     void addMlResults(const QJsonObject& MlResults);
 
-    QJsonDocument* generateGazeboJson();
+    QJsonDocument generateGazeboJson();
 
     inline void clearMainLayer(){ if(mLayer) mLayer->deleteItems(); }
     inline void clearObservationLayer(){ if(mObservationLayer) mObservationLayer->clear(); }
