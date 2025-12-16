@@ -36,23 +36,28 @@ void Http::handleReply(QNetworkReply* reply) {
         QByteArray data = reply->readAll();
 
         if (reply->error() != QNetworkReply::NoError) {
-            emit error(reply->errorString());
+            const QString msg = reply->errorString();
+            emit error(msg);
+            emit replyError(reply, msg);
             reply->deleteLater();
             return;
         }
+
         emit received(data);
+        emit replyReceived(reply, data);
 
         QJsonParseError perr;
         QJsonDocument doc = QJsonDocument::fromJson(data, &perr);
         if (perr.error == QJsonParseError::NoError) {
             emit jsonReceived(doc);
+            emit replyJsonReceived(reply, doc);
         }
 
         reply->deleteLater();
     });
 }
 
-void Http::get(const QUrl& url) {
+QNetworkReply* Http::get(const QUrl& url) {
     QUrl u;
     if (url.isRelative() && baseUrl_.isValid()) {
         u = baseUrl_.resolved(url);
@@ -63,15 +68,16 @@ void Http::get(const QUrl& url) {
 
     if (!u.isValid()) {
         emit error("invalid url");
-        return;
+        return nullptr;
     }
 
     QNetworkRequest req(u);
     QNetworkReply* reply = manager_.get(req);
-    handleReply(reply);
+    //handleReply(reply);
+    return reply;
 }
 
-void Http::post(const QUrl& url, const QByteArray& body, const QString& contentType) {
+QNetworkReply* Http::post(const QUrl& url, const QByteArray& body, const QString& contentType) {
     QUrl u;
     if (url.isRelative() && baseUrl_.isValid()) {
         u = baseUrl_.resolved(url);
@@ -82,7 +88,7 @@ void Http::post(const QUrl& url, const QByteArray& body, const QString& contentT
 
     if (!u.isValid()) {
         emit error("invalid url");
-        return;
+        return nullptr;
     }
 
     QNetworkRequest req(u);
@@ -91,7 +97,8 @@ void Http::post(const QUrl& url, const QByteArray& body, const QString& contentT
     }
 
     QNetworkReply* reply = manager_.post(req, body);
-    handleReply(reply);
+    //handleReply(reply);
+    return reply;
 }
 
 qint64 Http::send(const QByteArray& payload) {
@@ -104,16 +111,16 @@ qint64 Http::send(const QByteArray& payload) {
     return payload.size();
 }
 
-void Http::postJson(const QUrl& url, const QJsonValue& json) {
+QNetworkReply* Http::postJson(const QUrl& url, const QJsonValue& json) {
     QJsonDocument doc = json.isObject()
                         ? QJsonDocument(json.toObject())
                         : QJsonDocument::fromVariant(json.toVariant());
     QByteArray payload = doc.toJson(QJsonDocument::Compact);
-    post(url, payload, "application/json");
+    return post(url, payload, "application/json");
 }
 
-void Http::getJson(const QUrl& url) {
-    get(url);
+QNetworkReply* Http::getJson(const QUrl& url) {
+    return get(url);
 }
 
 

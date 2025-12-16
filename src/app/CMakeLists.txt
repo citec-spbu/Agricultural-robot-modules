@@ -1,10 +1,16 @@
 add_executable(AgroDesktop
     main.cpp
     Application.cc
-    widget.cpp
+    RobotService.h
+    widget.cc
     manager/manager.cpp
 )
 target_include_directories(AgroDesktop PRIVATE
     manager
 )
-target_link_libraries(AgroDesktop PRIVATE Qt::Core Qt::Widgets network Database)
+target_link_libraries(AgroDesktop PRIVATE
+        Qt6::Core
+        Qt6::Widgets
+        network
+        Database
+        MapLib)

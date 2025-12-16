@@ -2,6 +2,7 @@
 #define ROBOT_NETWORK_BASE_TRANSPORT_H_
 
 #include <QObject>
+#include <QNetworkReply>
 #include <QUrl>
 
 namespace RobotNetwork {
@@ -27,11 +28,11 @@ public:
         return -1;
     };
 
-    virtual void get(const QUrl& url) {
+    virtual QNetworkReply* get(const QUrl& url) {
         emit error("GET not supported");
     }
 
-    virtual void post(const QUrl& url, const QByteArray& body, const QString& contentType) {
+    virtual QNetworkReply* post(const QUrl& url, const QByteArray& body, const QString& contentType) {
         emit error("POST not supported");
     }
 

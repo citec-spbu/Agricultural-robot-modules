@@ -15,10 +15,7 @@ add_subdirectory(src/network)
 
 add_subdirectory(src/database)
 
-add_subdirectory(src/QGeoView/lib)
-add_subdirectory(src/QGeoView/shared)
-add_subdirectory(src/QGeoView/Map)
-
+add_subdirectory(src/QGeoView)
 
 add_subdirectory(src/app)
 

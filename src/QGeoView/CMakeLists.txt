@@ -1,10 +1,3 @@
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-
-project(QGeoView LANGUAGES C CXX)
-
-# Если не найден mingw_64 cmake
-# set(CMAKE_PREFIX_PATH "C:/Qt/6.8.2/mingw_64/lib/cmake")
-
 find_package(GDAL CONFIG)
 
 add_subdirectory(lib)
@@ -17,3 +10,30 @@ if(GDAL_FOUND)
 else()
     message(STATUS "GDAL not found, skipping gdal-shapefile example")
 endif()
+
+
+
+
+add_library(MapLib
+        Map/GeoViewWidget.h
+        Map/GeoViewWidget.cpp
+        Map/GeoPolyline.h
+        Map/GeoPolyline.cpp
+        Map/Contour.h
+        Map/Contour.cpp
+        Map/ObservationPoint.h Map/ObservationPoint.cpp
+        Map/ObservaionsLayer.h Map/ObservaionsLayer.cpp
+        Map/TestJson.h
+        Map/ContourPreviewDialog.h Map/ContourPreviewDialog.cpp
+)
+target_include_directories(MapLib PUBLIC Map)
+target_link_libraries(MapLib
+        PUBLIC
+        Qt6::Core
+        Qt6::Network
+        Qt6::Gui
+        Qt6::Widgets
+        QGeoView
+        qgeoview-samples-shared
+)
+

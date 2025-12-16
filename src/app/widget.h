@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <QString>
 
+#include "GeoViewWidget.h"
+
 class QStackedWidget;
 class QLineEdit;
 class QPlainTextEdit;
@@ -18,26 +20,17 @@ class Widget : public QWidget
     Q_OBJECT
 
 public:
-    explicit Widget(QWidget *parent = nullptr);
+    explicit Widget(GeoViewWidget* map, QWidget *parent = nullptr);
     ~Widget();
 
 private slots:
     void onStepRobot();
     void onStepML();
-    void onStepContour();
-    void onStepRoute();
-    void onStepCommands();
-    void onStepStart();
-    void onStepResults();
+    void onStepMap();
 
     void onConnectRobotClicked();
     void onFetchSpecClicked();
-    void onSaveMLClicked();
-    void onLoadContourClicked();
-    void onBuildRouteClicked();
-    void onViewCommandsClicked();
-    void onStartWorkClicked();
-    void onRequestResultsClicked();
+    void onConnectMLClicked();
 
 public:
     void showRobotSpec(const QString& json);
@@ -46,23 +39,14 @@ public:
 signals:
     void ConnectRobotClicked(QString robotHost, ushort robotPort);
     void FetchSpecClicked();
-    void SaveMLClicked();
-    void LoadContourClicked();
-    void BuildRouteClicked();
-    void ViewCommandsClicked();
-    void StartWorkClicked();
-    void RequestResultsClicked();
+    void ConnectMLClicked(QString MLHost, ushort MLPort);
 
 private:
     void setupUi();
 
     QWidget* createRobotPage();
     QWidget* createMLPage();
-    QWidget* createContourPage();
-    QWidget* createRoutePage();
-    QWidget* createCommandsPage();
-    QWidget* createStartPage();
-    QWidget* createResultsPage();
+    QWidget* createMapWidget();
 
 private:
 
@@ -87,6 +71,9 @@ private:
     InterfaceConfig m_robotInterface;
     InterfaceConfig m_mlInterface;
     QString m_contourFilePath;
+
+    // Map widget
+    GeoViewWidget* map;
 };
 
 #endif // WIDGET_H

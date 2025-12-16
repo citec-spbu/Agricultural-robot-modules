@@ -3,12 +3,14 @@
 
 #include <QApplication>
 #include <QUuid>
+#include <QJsonArray>
 
 #include "manager.h"
 #include "widget.h"
 #include "sqlitedb.h"
 #include "RobotService.h"
-//#include "MLService.h"
+#include "MLService.h"
+#include "GeoViewWidget.h"
 
 class Application : public QObject {
     Q_OBJECT
@@ -19,20 +21,43 @@ public:
     void log(const QString &msg);
 
 private:
-    void initWidgetConnections();
-    void initManagerConnections();
-    void initMLServiceConnections();
-    void initRobotServiceConnections();
+    void initConnections();
+
+    void sendNextCommand();
+    void startExecutionTimer(const QJsonObject& cmd);
+    void onCommandExecuted();
+    void startDelay();
+    void onDelayFinished();
+    void collectRobotState();
 
 private:
     QApplication app;
     QString m_sessionId;
 
     SQLiteDb database;
-    Widget widget;
+    Widget* widget;
+    GeoViewWidget* map;
     Manager manager;
     RobotService robot_service;
-    //MLService ml_service;
+    MLService ml_service;
+
+
+
+
+    QJsonArray CommandQueue;
+    int CommandIndex = 0;
+
+    QTimer ExecutionTimer;
+    QTimer DelayTimer;
+    QTimer CollectTimer;
+
+    enum class State {
+        Idle,
+        WaitingExecution,
+        WaitingDelay
+    };
+
+    State mState = State::Idle;
 };
 
 #endif // ! APPLICATION_H_

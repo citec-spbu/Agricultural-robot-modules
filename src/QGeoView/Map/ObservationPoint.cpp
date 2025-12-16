@@ -14,7 +14,7 @@ ObservationPoint::ObservationPoint(QGVMap* map, const QGV::GeoPos& pos, const QJ
     : mMap(map), mPos(pos), mRadiusMeters(radiusMeters)
 {
     if (!json.isEmpty()) setRobotData(json);
-    setMLResults(json);
+    //TODO setMLResults(json);
 }
 
 ObservationPoint::ObservationPoint(const QJsonObject& json, QGVMap* map, double radiusMeters, QObject* parent)

@@ -6,13 +6,26 @@
 using namespace RobotNetwork;
 
 class RobotService : public Http {
+    Q_OBJECT
 public:
     RobotService() = default;
 
-    void getSpec() {
-        getJson(QUrl("/spec/"));
+    QNetworkReply* getSpecification() {
+        return get(QUrl("/spec/"));
     }
-private:
+
+    QNetworkReply* getCollect() {
+        return get(QUrl("/collect/"));
+    }
+
+    QNetworkReply* sendCommand(const QJsonValue& val) {
+        return postJson(QUrl("/command/"), val);
+    }
+
+    QNetworkReply* postStop() {
+        return post(QUrl("/stop/"), {}, {});
+    }
+
 };
 
 #endif // ! ROBOT_SERVICE_H_

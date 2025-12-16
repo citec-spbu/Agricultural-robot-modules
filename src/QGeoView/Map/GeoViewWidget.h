@@ -86,6 +86,7 @@ protected:
     void clearRobotRouteLayer();
     void clearRobotLayer();
 
+public:
 signals:
     void routeBuilt(const QJsonDocument& jsonDoc);
 

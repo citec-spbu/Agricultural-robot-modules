@@ -25,11 +25,6 @@ class Http : public BaseConnection {
 public:
     explicit Http(QObject* parent = nullptr);
 
-    qint64 send(const QByteArray& payload) override;
-
-    void get(const QUrl& url) override;
-    void post(const QUrl& url, const QByteArray& body, const QString& contentType) override;
-
     Capabilities caps() const override;
 
     void open(const QUrl& url) override;
@@ -37,11 +32,18 @@ public:
     void close() override;
     bool isOpen() const override; // always false
 
-    void postJson(const QUrl& url, const QJsonValue& json);
-    void getJson(const QUrl& url);
+    qint64 send(const QByteArray& payload) override;
+    QNetworkReply* get(const QUrl& url) override;
+    QNetworkReply* post(const QUrl& url, const QByteArray& body, const QString& contentType) override;
+    QNetworkReply* postJson(const QUrl& url, const QJsonValue& json);
+    QNetworkReply* getJson(const QUrl& url);
 
 signals:
     void jsonReceived(const QJsonDocument& doc);
+
+    void replyReceived(QNetworkReply* reply, const QByteArray& data);
+    void replyJsonReceived(QNetworkReply* reply, const QJsonDocument& doc);
+    void replyError(QNetworkReply* reply, const QString& message);
 
 private:
     QNetworkAccessManager manager_;
