@@ -32,6 +32,7 @@ add_executable(Map
     ObservaionsLayer.h ObservaionsLayer.cpp
     TestJson.h
     ContourPreviewDialog.h ContourPreviewDialog.cpp
+    resources.qrc
 )
 
 target_link_libraries(Map

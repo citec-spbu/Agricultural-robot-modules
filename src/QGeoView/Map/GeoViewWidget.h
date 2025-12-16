@@ -14,6 +14,8 @@
 #include <QGeoView/QGVMap.h>
 #include <qjsondocument.h>
 
+constexpr double EARTH_RADIUS_METERS = 6371000.0;
+
 class GeoViewWidget : public QWidget
 {
     Q_OBJECT
@@ -77,6 +79,8 @@ protected:
 
     void addMlResults(const QJsonObject& MlResults);
 
+    QJsonDocument* generateGazeboJson();
+
     inline void clearMainLayer(){ if(mLayer) mLayer->deleteItems(); }
     inline void clearObservationLayer(){ if(mObservationLayer) mObservationLayer->clear(); }
 
@@ -85,6 +89,11 @@ protected:
     void clearRouteLayer();
     void clearRobotRouteLayer();
     void clearRobotLayer();
+
+private:
+    double haversineDistance(const QGV::GeoPos& pos1, const QGV::GeoPos& pos2);
+    double calculateBearing(const QGV::GeoPos& start, const QGV::GeoPos& end);
+    QPointF computeGazeboPoint(const QGV::GeoPos& start, const QGV::GeoPos& end);
 
 public:
 signals:

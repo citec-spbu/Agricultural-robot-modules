@@ -119,49 +119,6 @@ QGroupBox* GeoViewWidget::createOptionsList()
     groupBox->setLayout(new QVBoxLayout);
 
     {
-        QPushButton* button = new QPushButton("Добавить контур (GeoJson)");
-        groupBox->layout()->addWidget(button);
-
-        connect(button, &QPushButton::clicked, this, &GeoViewWidget::addContour);
-    }
-
-    {
-        QPushButton* button = new QPushButton("Указать маршрут вручную");
-        groupBox->layout()->addWidget(button);
-
-        connect(button, &QPushButton::clicked, this, [this, button](){
-            toggleManualRouteMode();
-            button->setText(mManualRouteMode ? "Завершить построение маршрута" : "Указать маршрут вручную");
-        });
-    }
-
-    {
-        QPushButton* button = new QPushButton("Построить команды");
-        groupBox->layout()->addWidget(button);
-
-        connect(button, &QPushButton::clicked, this, [this]() {
-            createRoute();
-            showRobotCommandsJson();
-
-            qDebug() << "Маршрут и команды обновлены.";
-        });
-    }
-
-    {
-        QPushButton* button = new QPushButton("Удалить контур");
-        groupBox->layout()->addWidget(button);
-
-        connect(button, &QPushButton::clicked, this, &GeoViewWidget::removeContour);
-    }
-
-    {
-        QPushButton* button = new QPushButton("Очистить все");
-        groupBox->layout()->addWidget(button);
-
-        connect(button, &QPushButton::clicked, this, &GeoViewWidget::clearAll);
-    }
-
-    {
         QPushButton* button = new QPushButton("Задать начальную позицию робота");
         groupBox->layout()->addWidget(button);
 
@@ -184,16 +141,81 @@ QGroupBox* GeoViewWidget::createOptionsList()
     }
 
     {
-        QPushButton* button = new QPushButton("Следующая позиция робота");
+        QPushButton* button = new QPushButton("Добавить контур (GeoJson)");
         groupBox->layout()->addWidget(button);
 
-        connect(button, &QPushButton::clicked, this, [this](){
-            updateRobotOnMapFromJson(ML_JSON);
+        connect(button, &QPushButton::clicked, this, &GeoViewWidget::addContour);
+    }
+
+    {
+        QPushButton* button = new QPushButton("Построить команды");
+        groupBox->layout()->addWidget(button);
+
+        connect(button, &QPushButton::clicked, this, [this]() {
+            createRoute();
+            showRobotCommandsJson();
+
+            qDebug() << "Маршрут и команды обновлены.";
         });
     }
 
     {
-        QPushButton* button = new QPushButton("Старт");
+        QPushButton* button = new QPushButton("Указать маршрут вручную");
+        groupBox->layout()->addWidget(button);
+
+        connect(button, &QPushButton::clicked, this, [this, button](){
+            toggleManualRouteMode();
+            button->setText(mManualRouteMode ? "Завершить построение маршрута" : "Указать маршрут вручную");
+        });
+    }
+
+    {
+        QPushButton* button = new QPushButton("Удалить контур");
+        groupBox->layout()->addWidget(button);
+
+        connect(button, &QPushButton::clicked, this, &GeoViewWidget::removeContour);
+    }
+
+    {
+        QPushButton* button = new QPushButton("Очистить все");
+        groupBox->layout()->addWidget(button);
+
+        connect(button, &QPushButton::clicked, this, &GeoViewWidget::clearAll);
+    }
+
+    {
+        QPushButton* button = new QPushButton("Сгенерировать json для симуляции в Gazebo");
+        groupBox->layout()->addWidget(button);
+
+        connect(button, &QPushButton::clicked, this, [this]() {
+            QJsonDocument* jsonDoc = generateGazeboJson();
+            if (!jsonDoc) {
+                return;
+            }
+
+            QString filename = QFileDialog::getSaveFileName(
+                this,
+                "Сохранить JSON",
+                QString(),
+                "JSON Files (*.json)"
+                );
+
+            if (!filename.isEmpty()) {
+                QFile file(filename);
+                if (file.open(QIODevice::WriteOnly)) {
+                    file.write(jsonDoc->toJson());
+                    file.close();
+                } else {
+                    QMessageBox::warning(this, "Ошибка", "Не удалось сохранить файл");
+                }
+            }
+
+            delete jsonDoc;
+        });
+    }
+
+    {
+        QPushButton* button = new QPushButton("Тест");
         groupBox->layout()->addWidget(button);
 
         connect(button, &QPushButton::clicked, this, [this]() {
@@ -265,7 +287,8 @@ QGroupBox* GeoViewWidget::createInfoList()
 
 void GeoViewWidget::preloadImages()
 {
-    loadImage(mRobotIcon, QUrl{ "https://earth.google.com/images/kml-icons/track-directional/track-0.png" });
+    //loadImage(mRobotIcon, QUrl{ "https://earth.google.com/images/kml-icons/track-directional/track-0.png" });
+    mRobotIcon.load(":/icons/robot_icons/robot_icon.png");
 }
 
 void GeoViewWidget::loadImage(QImage& dest, QUrl url)
@@ -842,7 +865,6 @@ void GeoViewWidget::updateRobot(double latitude, double longitude, double angle)
     updateInfoList();
 }
 
-
 void GeoViewWidget::createRoute()
 {
     clearRouteCommands();
@@ -944,7 +966,6 @@ void GeoViewWidget::createRoute()
     qDebug() << "Маршрут построен." << commands.size();
 }
 
-
 void GeoViewWidget::showRobotCommandsJson()
 {
     if (!mInfoList || !mRouteCommands) return;
@@ -1042,6 +1063,82 @@ void GeoViewWidget::updateRobotPos(const QJsonObject& json){
 
 void GeoViewWidget::setMlResults(const QJsonObject& json){
     addMlResults(json);
+}
+
+double GeoViewWidget::haversineDistance(const QGV::GeoPos& start, const QGV::GeoPos& end) {
+    double lat1 = qDegreesToRadians(start.latitude());
+    double lat2 = qDegreesToRadians(end.latitude());
+    double dLat = lat2 - lat1;
+    double dLon = qDegreesToRadians(end.longitude() - start.longitude());
+
+    double a = sin(dLat/2) * sin(dLat/2) +
+               cos(lat1) * cos(lat2) *
+                   sin(dLon/2) * sin(dLon/2);
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+    return EARTH_RADIUS_METERS * c;
+}
+
+double GeoViewWidget::calculateBearing(const QGV::GeoPos& start, const QGV::GeoPos& end) {
+    double lat1 = qDegreesToRadians(start.latitude());
+    double lat2 = qDegreesToRadians(end.latitude());
+    double dLon = qDegreesToRadians(end.longitude() - start.longitude());
+
+    double y = sin(dLon) * cos(lat2);
+    double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon);
+    double bearingRad = atan2(y, x);
+
+    double bearingDeg = qDegreesToRadians(bearingRad);
+
+    if (bearingDeg > 180) {
+        bearingDeg -= 360;
+    } else if (bearingDeg < -180) {
+        bearingDeg += 360;
+    }
+    return bearingDeg;
+}
+
+QPointF GeoViewWidget::computeGazeboPoint(const QGV::GeoPos& start, const QGV::GeoPos& end) {
+    double distance = haversineDistance(start, end);
+    double azimuth = calculateBearing(start, end);
+
+    double localX = distance * sin(azimuth);
+    double localY = distance * cos(azimuth);
+
+    return QPointF(localY, localX);
+}
+
+QJsonDocument* GeoViewWidget::generateGazeboJson() {
+    if (!mRobotItem.item || !mRouteCommands || !mContour) {
+        QMessageBox::warning(this, "Недостаточно данных",
+                             "Для построения JSON необходимо:\n"
+                             "- начальное положение робота\n"
+                             "- контур точек\n"
+                             "- построенный маршрут");
+        return nullptr;
+    }
+
+    QGV::GeoPos startPos = mRobotItem.pos;
+
+    QJsonArray pointsArray;
+    for (const auto& point : mContour->points()) {
+        QPointF gazeboPoint = computeGazeboPoint(startPos, point);
+        QJsonObject pointObj;
+        pointObj["x"] = gazeboPoint.x();
+        pointObj["y"] = gazeboPoint.y();
+        pointObj["z"] = 0.0;
+        pointsArray.append(pointObj);
+    }
+
+    QJsonObject contourObj;
+    contourObj["points"] = pointsArray;
+
+    QJsonObject rootObj;
+    rootObj["contour"] = contourObj;
+
+    rootObj["commands"] = mRouteCommands->array();
+
+    return new QJsonDocument(rootObj);
 }
 
 void GeoViewWidget::clearRouteLayer(){
