@@ -26,11 +26,20 @@ void Widget::setupUi()
     auto *stepsLayout = new QVBoxLayout;
     auto *btn1 = new QPushButton("Робот");
     auto *btn2 = new QPushButton("ML сервис");
-    auto *btn8 = new QPushButton("Карта");
+    auto *btn3 = new QPushButton("Карта");
+
+    auto *btn4 = new QPushButton("Старт");
+    auto *btn5 = new QPushButton("Стоп");
 
     stepsLayout->addWidget(btn1);
+    stepsLayout->addSpacing(1);
     stepsLayout->addWidget(btn2);
-    stepsLayout->addWidget(btn8);
+    stepsLayout->addSpacing(1);
+    stepsLayout->addWidget(btn3);
+    stepsLayout->addSpacing(25);
+    stepsLayout->addWidget(btn4);
+    stepsLayout->addSpacing(1);
+    stepsLayout->addWidget(btn5);
     stepsLayout->addStretch();
 
     auto *stepsWidget = new QWidget(this);
@@ -40,14 +49,16 @@ void Widget::setupUi()
     m_stack = new QStackedWidget(this);
     m_stack->addWidget(createRobotPage());    // 0
     m_stack->addWidget(createMLPage());       // 1
-    m_stack->addWidget(map);    // 2
+    m_stack->addWidget(map);                  // 2
 
     mainLayout->addWidget(stepsWidget);
     mainLayout->addWidget(m_stack, 1);
 
     connect(btn1, &QPushButton::clicked, this, &Widget::onStepRobot);
     connect(btn2, &QPushButton::clicked, this, &Widget::onStepML);
-    connect(btn8, &QPushButton::clicked, this, &Widget::onStepMap);
+    connect(btn3, &QPushButton::clicked, this, &Widget::onStepMap);
+    connect(btn4, &QPushButton::clicked, this, &Widget::StartClicked);
+    connect(btn5, &QPushButton::clicked, this, &Widget::StopClicked);
 }
 
 

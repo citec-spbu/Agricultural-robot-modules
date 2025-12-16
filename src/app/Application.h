@@ -44,8 +44,10 @@ private:
 
 
 
+
     QJsonArray CommandQueue;
     int CommandIndex = 0;
+    bool readyToStart = false;
 
     QTimer ExecutionTimer;
     QTimer DelayTimer;

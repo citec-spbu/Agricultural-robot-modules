@@ -288,7 +288,7 @@ QGroupBox* GeoViewWidget::createInfoList()
 void GeoViewWidget::preloadImages()
 {
     //loadImage(mRobotIcon, QUrl{ "https://earth.google.com/images/kml-icons/track-directional/track-0.png" });
-    mRobotIcon.load(":/icons/robot_icons/robot_icon.png");
+    mRobotIcon.load("robot_icons/robot_icon.png");
 }
 
 void GeoViewWidget::loadImage(QImage& dest, QUrl url)

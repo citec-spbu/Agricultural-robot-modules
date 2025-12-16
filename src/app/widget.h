@@ -41,6 +41,9 @@ signals:
     void FetchSpecClicked();
     void ConnectMLClicked(QString MLHost, ushort MLPort);
 
+    void StartClicked();
+    void StopClicked();
+
 private:
     void setupUi();
 

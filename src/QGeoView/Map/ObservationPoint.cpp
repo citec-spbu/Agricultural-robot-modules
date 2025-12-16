@@ -171,6 +171,11 @@ void ObservationPoint::showData()
                     continue;
 
                 QString base64 = it.value().toString();
+
+                if (base64.contains(",")) {
+                    base64 = base64.section(',', 1);
+                }
+
                 QImage img = decodeBase64Image(base64);
                 if (img.isNull())
                     continue;

@@ -25,8 +25,9 @@ add_library(MapLib
         Map/ObservaionsLayer.h Map/ObservaionsLayer.cpp
         Map/TestJson.h
         Map/ContourPreviewDialog.h Map/ContourPreviewDialog.cpp
+        Map/resources.qrc
 )
-target_include_directories(MapLib PUBLIC Map)
+target_include_directories(MapLib PUBLIC Map Map/robot_icons)
 target_link_libraries(MapLib
         PUBLIC
         Qt6::Core

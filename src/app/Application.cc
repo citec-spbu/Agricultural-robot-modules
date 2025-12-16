@@ -81,6 +81,19 @@ void Application::initConnections() {
         ml_service.open(url);
     });
 
+    QObject::connect(widget, &Widget::StartClicked, this, [this](){
+        sendNextCommand();
+    });
+
+    QObject::connect(widget, &Widget::StopClicked, this, [this](){
+        readyToStart = false;
+        robot_service.postStop();
+        mState = State::Idle;
+        ExecutionTimer.stop();
+        DelayTimer.stop();
+        CollectTimer.stop();
+    });
+
     QObject::connect(&manager, &Manager::sendCommand, this, [this](const QString& type, const QJsonObject& json) {
         if (type == "robot") {
             // robot_service.send(json);
@@ -139,7 +152,7 @@ void Application::initConnections() {
         CommandIndex = 0;
         mState = State::Idle;
 
-        sendNextCommand();
+        readyToStart = true;
     });
 
 }
@@ -258,18 +271,24 @@ void Application::collectRobotState()
 
                 map->updateRobotOnMapFromJson(doc.object());
 
-//                QNetworkReply* r = ml_service.postDetect(doc.object());
-//                connect(r, &QNetworkReply::finished, [r, this](){
-//                    QByteArray data = r->readAll();
-//
-//                    QJsonParseError err;
-//                    QJsonDocument doc = QJsonDocument::fromJson(data, &err);
-//                    if (err.error == QJsonParseError::NoError) {
-//                        map->updateRobotPos(doc.object());
-//                    } else {
-//                        log("parse json error:  " + err.errorString());
-//                    }
-//                });
+                QNetworkReply* r = ml_service.postDetect(doc.object());
+                connect(r, &QNetworkReply::finished, [r, this](){
+                    QByteArray data = r->readAll();
+
+                    //log("ML_Service: QByteArray:  " + data);
+
+                    QJsonParseError err;
+                    QJsonDocument doc = QJsonDocument::fromJson(data, &err);
+                    if (err.error == QJsonParseError::NoError) {
+
+                        //QString str = doc.toJson(QJsonDocument::Indented);
+                        //log("STRRRR: " + str);
+
+                        map->setMlResults(doc.object());
+                    } else {
+                        log("ML_Service: parse json error:  " + err.errorString());
+                    }
+                });
 
             }
         }
