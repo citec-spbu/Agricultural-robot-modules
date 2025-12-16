@@ -1,0 +1,461 @@
+{
+    "commands": [
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -69.28207107989375
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 16.62899438855376
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 49.28206543857986
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.677290897984675
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -70.00000981094067
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504678482791924
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -109.99996344817083
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 10.000471473552082
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 19.99997890042539
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 6.881528550668481
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 159.9999634491733
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 17.323641198030426
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -69.99997890142785
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504678482583594
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -109.9999327907413
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 24.53267772722206
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 109.9999327906646
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504666050209308
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 69.99996369362653
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 24.53267772722206
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -69.99996369354983
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504678483000254
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -109.99993279119855
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 24.53267772729332
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 109.99993279112185
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504666050209308
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 69.99996369362653
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 24.53267772722206
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -69.99996369354983
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504678483000254
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -109.9999327907413
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 24.53267772722206
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 109.9999327906646
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.50466604979265
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 69.99996369362653
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 24.53267772722206
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -69.99996369354983
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504678483000254
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -109.9999327907413
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 24.53267772722206
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 109.9999327906646
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.5046660500009787
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 69.99996369362653
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 24.53267772722206
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -69.99996369354983
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504678483000254
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -109.9999327907413
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 24.53267772722206
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 109.9999327906646
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504666050209308
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 69.99996369362653
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 24.53267772722206
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -69.99996369354983
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504678482583594
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -109.99993279119855
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 24.53267772729332
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 109.99993279112185
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504666050209308
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 69.99996634078114
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 23.277476274273724
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -159.9999508884499
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 6.881540727942781
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -19.99996634297287
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 15.9542935911511
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 109.99995089064161
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 2.504666050209308
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": 69.99999724223015
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 8.631121759115818
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -159.9999817898989
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 6.881520334403479
+            }
+        },
+        {
+            "cmd": "rotate",
+            "data": {
+                "delta_angle": -19.999997231521093
+            }
+        },
+        {
+            "cmd": "move",
+            "data": {
+                "distance_m": 1.3079607783100358
+            }
+        }
+    ],
+    "contour": {
+        "points": [
+            {
+                "x": 9.760383644694697,
+                "y": -15.151088999802488,
+                "z": 0
+            },
+            {
+                "x": -15.504473853188482,
+                "y": -15.151171423222664,
+                "z": 0
+            },
+            {
+                "x": -15.504212936221874,
+                "y": -51.50805041578034,
+                "z": 0
+            },
+            {
+                "x": 9.760644560620854,
+                "y": -51.50777020946684,
+                "z": 0
+            }
+        ]
+    }
+}
+
