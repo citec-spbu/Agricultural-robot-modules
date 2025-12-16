@@ -9,8 +9,8 @@ class ObservationPoint : public QGVDrawItem
     Q_OBJECT
 
 public:
-    ObservationPoint(QGVMap* map, const QGV::GeoPos& pos, const QJsonObject& json = QJsonObject(), double radiusMeters = 2.0, QObject* parent = nullptr);
-    ObservationPoint(const QJsonObject&, QGVMap* map, double radiusMeters = 2.0, QObject* parent = nullptr);
+    ObservationPoint(QGVMap* map, const QGV::GeoPos& pos, const QJsonObject& json = QJsonObject(), double radiusMeters = 1.0, QObject* parent = nullptr);
+    ObservationPoint(const QJsonObject&, QGVMap* map, double radiusMeters = 1.0, QObject* parent = nullptr);
     ~ObservationPoint()  = default;
 
     void setRobotData(const QJsonObject& obj);
