@@ -8,14 +8,14 @@ QString jsonStr = QString(R"(
 {
     "latitude": 53.90931,
     "longitude": 27.55805,
-    "rotation_angle": 0,
+    "rotation_angle": 180,
     "img_base64": "%1"}
 )").arg(img);
 
 QString mlResult = QString(R"(
 {
-    "latitude": 53.90943,
-    "longitude": 27.55809,
+    "latitude": 53.90931,
+    "longitude": 27.55805,
     "rotation_angle": 45,
     "img_base64": "%1",
     "img2_base64": "%1"}

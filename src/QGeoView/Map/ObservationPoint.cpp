@@ -14,7 +14,7 @@ ObservationPoint::ObservationPoint(QGVMap* map, const QGV::GeoPos& pos, const QJ
     : mMap(map), mPos(pos), mRadiusMeters(radiusMeters)
 {
     if (!json.isEmpty()) setRobotData(json);
-    setMLResults(json);
+    //setMLResults(json);
 }
 
 ObservationPoint::ObservationPoint(const QJsonObject& json, QGVMap* map, double radiusMeters, QObject* parent)
@@ -36,7 +36,12 @@ void ObservationPoint::setRobotData(const QJsonObject& obj)
 void ObservationPoint::setMLResults(const QJsonObject& obj)
 {
     mMLResults = obj;
+
+    if (mMap) {
+        this->repaint();
+    }
 }
+
 
 QColor ObservationPoint::color() const
 {

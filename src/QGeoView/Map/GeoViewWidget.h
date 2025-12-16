@@ -93,8 +93,8 @@ protected:
 private:
     double haversineDistance(const QGV::GeoPos& pos1, const QGV::GeoPos& pos2);
     double calculateBearing(const QGV::GeoPos& start, const QGV::GeoPos& end);
+    double calculateRosYaw(const QGV::GeoPos& start, const QGV::GeoPos& end);
     QPointF computeGazeboPoint(const QGV::GeoPos& start, const QGV::GeoPos& end);
-
 signals:
     void routeBuilt(const QJsonDocument& jsonDoc);
 

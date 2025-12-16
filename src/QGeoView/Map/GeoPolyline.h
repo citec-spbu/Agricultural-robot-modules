@@ -15,7 +15,7 @@ public:
     QVector<QGV::GeoPos> points;
 
     void setPen(const QPen& pen) { mPen = pen; update(); }
-
+    QPolygonF calcArrowPolygon(const QPointF& start, const QPointF& end) const;
     bool drawArrowOnEnd = false;
 protected:
 
@@ -29,6 +29,9 @@ private:
     QVector<QPointF> mProjPoints;
     QPen mPen = QPen(QColor(255, 0, 0, 180), 2); // красная линия по умолчанию
     QPainterPath mCachedPath;
+
+    double arrowLength = 3.0;
+    double arrowWidth  = 1.8;
 
     void rebuild();
     void drawArrow(QPainter* p, const QPointF& start, const QPointF& end);

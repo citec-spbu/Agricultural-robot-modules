@@ -210,7 +210,7 @@ QGroupBox* GeoViewWidget::createOptionsList()
             }
         });
     }
-
+/*
     {
         QPushButton* button = new QPushButton("Тест");
         groupBox->layout()->addWidget(button);
@@ -221,7 +221,7 @@ QGroupBox* GeoViewWidget::createOptionsList()
             qDebug() << "Маршрут и команды обновлены.";
         });
     }
-
+*/
     return groupBox;
 }
 
@@ -569,7 +569,6 @@ QVector<QGV::GeoPos> GeoViewWidget::buildRouteWithAngle(double stepMeters,
     return snakePath;
 }
 
-
 // Основная функция с подбором угла
 void GeoViewWidget::generateParallelRoute(double stepMeters)
 {
@@ -766,6 +765,7 @@ void GeoViewWidget::addRobot(double latitude, double longitude, double angle)
         clearRobotLayer();
         clearRobotRouteLayer();
         clearObservationLayer();
+        mRoutePoints.pop_front();
     }
 
     auto geoPoint = QGV::GeoPos(latitude, longitude);
@@ -780,6 +780,7 @@ void GeoViewWidget::addRobot(double latitude, double longitude, double angle)
     auto* item = new QGVIcon();
     item->setGeometry(projPos);
     item->loadImage(rotated.toImage());
+    item->setZValue(10.0);
 
     mRobotLayer->addItem(item);
 
@@ -848,6 +849,7 @@ void GeoViewWidget::updateRobot(double latitude, double longitude, double angle)
     auto* item = new QGVIcon();
     item->setGeometry(projPos);
     item->loadImage(rotated.toImage());
+    item->setZValue(10.0);
 
     mRobotLayer->addItem(item);
 
@@ -1068,24 +1070,22 @@ double GeoViewWidget::haversineDistance(const QGV::GeoPos& start, const QGV::Geo
     double dLat = lat2 - lat1;
     double dLon = qDegreesToRadians(end.longitude() - start.longitude());
 
-    double a = sin(dLat/2) * sin(dLat/2) +
+    double a = sin(dLat / 2) * sin(dLat / 2) +
                cos(lat1) * cos(lat2) *
-                   sin(dLon/2) * sin(dLon/2);
+                   sin(dLon / 2) * sin(dLon / 2);
     double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
     return EARTH_RADIUS_METERS * c;
 }
 
-double GeoViewWidget::calculateBearing(const QGV::GeoPos& start,
-                                       const QGV::GeoPos& end)
-{
+double GeoViewWidget::calculateBearing(const QGV::GeoPos& start, const QGV::GeoPos& end) {
     double lat1 = qDegreesToRadians(start.latitude());
     double lat2 = qDegreesToRadians(end.latitude());
     double dLon = qDegreesToRadians(end.longitude() - start.longitude());
 
     double y = sin(dLon) * cos(lat2);
-    double x = cos(lat1) * sin(lat2)
-               - sin(lat1) * cos(lat2) * cos(dLon);
+    double x = cos(lat1) * sin(lat2) -
+               sin(lat1) * cos(lat2) * cos(dLon);
 
     double bearingRad = atan2(y, x);
     double bearingDeg = qRadiansToDegrees(bearingRad);
@@ -1096,18 +1096,28 @@ double GeoViewWidget::calculateBearing(const QGV::GeoPos& start,
     return bearingDeg;
 }
 
-
-QPointF GeoViewWidget::computeGazeboPoint(const QGV::GeoPos& start,
-                                          const QGV::GeoPos& end)
-{
+QPointF GeoViewWidget::computeGazeboPoint(const QGV::GeoPos& start, const QGV::GeoPos& end) {
     double distance = haversineDistance(start, end);
     double bearingDeg = calculateBearing(start, end);
     double bearingRad = qDegreesToRadians(bearingDeg);
 
-    double xEast  = distance * sin(bearingRad);
-    double yNorth = distance * cos(bearingRad);
+    double xEast  = distance * sin(bearingRad);  // Восток
+    double yNorth = distance * cos(bearingRad); // Север
 
-    return QPointF(xEast, yNorth);
+    return QPointF(xEast, yNorth);  // Локальные координаты ENU
+}
+
+
+double GeoViewWidget::calculateRosYaw(const QGV::GeoPos& start, const QGV::GeoPos& end) {
+    double bearingDeg = calculateBearing(start, end);
+    double bearingRad = qDegreesToRadians(bearingDeg);
+
+    double yawRos = M_PI_2 - bearingRad;
+
+    if (yawRos > M_PI) yawRos -= 2 * M_PI;
+    if (yawRos < -M_PI) yawRos += 2 * M_PI;
+
+    return yawRos;
 }
 
 QJsonDocument GeoViewWidget::generateGazeboJson() {
@@ -1123,12 +1133,11 @@ QJsonDocument GeoViewWidget::generateGazeboJson() {
     QGV::GeoPos startPos = mRobotItem.pos;
 
     QJsonArray pointsArray;
-
-    for (auto point = mContour->points().begin(); point != mContour->points().end() - 1; point++) {
+    for (auto point = mContour->points().begin(); point != mContour->points().end() - 1; ++point) {
         QPointF gazeboPoint = computeGazeboPoint(startPos, *point);
         QJsonObject pointObj;
-        pointObj["x"] = gazeboPoint.x();
-        pointObj["y"] = gazeboPoint.y();
+        pointObj["x"] = gazeboPoint.y();
+        pointObj["y"] = -gazeboPoint.x();
         pointObj["z"] = 0.0;
         pointsArray.append(pointObj);
     }
@@ -1136,13 +1145,39 @@ QJsonDocument GeoViewWidget::generateGazeboJson() {
     QJsonObject contourObj;
     contourObj["points"] = pointsArray;
 
+    QJsonArray newCommands;
+    double prevYaw = 0.0;
+    auto normalizeAngleRad = [](double a) {
+        while (a > M_PI) a -= 2*M_PI;
+        while (a < -M_PI) a += 2*M_PI;
+        return a;
+    };
+
+    for (const auto& cmdVal : mRouteCommands->array()) {
+        QJsonObject cmdObj = cmdVal.toObject();
+        if (cmdObj["cmd"].toString() == "rotate") {
+            double deltaDeg = cmdObj["data"].toObject()["delta_angle"].toDouble();
+            double deltaRad = qDegreesToRadians(deltaDeg);
+
+            deltaRad = normalizeAngleRad(deltaRad);
+
+            prevYaw += deltaRad;
+
+            QJsonObject data;
+            data["delta_angle"] = qRadiansToDegrees(deltaRad);
+            cmdObj["data"] = data;
+        }
+
+        newCommands.append(cmdObj);
+    }
+
     QJsonObject rootObj;
     rootObj["contour"] = contourObj;
-
-    rootObj["commands"] = mRouteCommands->array();
+    rootObj["commands"] = newCommands;
 
     return QJsonDocument(rootObj);
 }
+
 
 void GeoViewWidget::clearRouteLayer(){
     if(mRouteLayer) mRouteLayer->deleteItems();
