@@ -36,7 +36,12 @@ void ObservationPoint::setRobotData(const QJsonObject& obj)
 void ObservationPoint::setMLResults(const QJsonObject& obj)
 {
     mMLResults = obj;
+
+    if (mMap) {
+        this->repaint();
+    }
 }
+
 
 QColor ObservationPoint::color() const
 {
