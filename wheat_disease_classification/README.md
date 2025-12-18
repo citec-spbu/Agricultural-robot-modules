@@ -30,13 +30,21 @@
 
 ## Структура проекта
 wheat_disease_classification/
+
 ├── train.py
+
 ├── infer.py
+
 ├── evaluate.py
+
 ├── evaluate_train.py
+
 ├── class_names.txt
+
 ├── requirements.txt
+
 └── README.md
+
 Обучение модели
 ```bash
 python train.py
