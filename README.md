@@ -18,5 +18,5 @@ Download file https://download.pytorch.org/models/mobilenet_v3_large-8738ca79.pt
 \
 \
 Result:\
-ML service port: http://localhost:8001\
+ML service port: http://localhost:8001 \
 RobotSim service port: http://localhost:8002
