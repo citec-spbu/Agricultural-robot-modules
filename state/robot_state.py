@@ -1,7 +1,7 @@
 import time, os, base64
 from threading import Lock
 from geographiclib.geodesic import Geodesic
-from config import *
+from .config import *
 
 class Robot:
     def __init__(self, latitude=START_LATITUDE, longitude=START_LONGITUDE, rotation_angle=START_ANGLE):
