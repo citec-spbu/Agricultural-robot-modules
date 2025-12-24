@@ -8,7 +8,7 @@ QString jsonStr = QString(R"(
 {
     "latitude": 53.90931,
     "longitude": 27.55805,
-    "rotation_angle": 180,
+    "rotation_angle": 0,
     "img_base64": "%1"}
 )").arg(img);
 

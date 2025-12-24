@@ -203,7 +203,7 @@ void Application::startExecutionTimer(const QJsonObject& cmd)
             this, &Application::collectRobotState,
             Qt::UniqueConnection);
 
-    CollectTimer.start(1000);
+    CollectTimer.start(2000);
 }
 
 void Application::onCommandExecuted()
