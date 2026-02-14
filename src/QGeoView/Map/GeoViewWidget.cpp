@@ -1,7 +1,6 @@
 #include "GeoViewWidget.h"
 #include "GeoViewRouteLogic.h"
 #include "GeoPolyline.h"
-#include "TestJson.h"
 
 #include <QCheckBox>
 #include <QHBoxLayout>
@@ -90,15 +89,10 @@ GeoViewWidget::GeoViewWidget(QWidget* parent)
     layout->addWidget(widget);
 
     connect(mToolbar, &GeoViewToolbar::setInitialRobotPositionRequested, this, [this]() {
-        addRobotOnMapFromJson(TEST_JSON);
-        QTimer::singleShot(100, this, [this]() {
-            if (!mRobotItem.item) return;
-            mMap->cameraTo(QGVCameraActions(mMap).moveTo(mRobotItem.pos));
-            QTimer::singleShot(50, this, [this]() {
-                auto* zoomWidget = mMap->findChild<QGVWidgetZoom*>();
-                if (zoomWidget) zoomWidget->minus();
-            });
-        });
+        mWaitingForRobotPos = true;
+        QMessageBox::information(this,
+                                 tr("Задать позицию робота"),
+                                 tr("Нажмите на карту, чтобы задать начальную позицию робота."));
     });
     connect(mToolbar, &GeoViewToolbar::addContourRequested, this, &GeoViewWidget::addContour);
     connect(mToolbar, &GeoViewToolbar::buildCommandsRequested, this, [this]() {
@@ -137,6 +131,11 @@ GeoViewWidget::GeoViewWidget(QWidget* parent)
 
     // Подключение к событию клика на карту
     connect(mMap, &QGVMap::mapMousePress, this, [this](QPointF projPos) {
+        if (mWaitingForRobotPos) {
+            addRobotOnMapFromMousePress(projPos);
+            return;
+        }
+
         QGV::GeoPos geoPos = mMap->getProjection()->projToGeo(projPos);
         mObservationLayer->handleMapClick(geoPos);
 
