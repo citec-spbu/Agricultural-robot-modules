@@ -192,6 +192,7 @@ QVector<QGV::GeoPos> GeoViewRouteLogic::reorderPointsForShortestRoute(const QVec
     if (points.size() < 2)
         return points;
 
+    // 1) Жадный алгоритм (nearest neighbor) — начальное решение
     QVector<QGV::GeoPos> ordered;
     ordered.reserve(points.size());
     QVector<bool> used(points.size(), false);
@@ -217,6 +218,34 @@ QVector<QGV::GeoPos> GeoViewRouteLogic::reorderPointsForShortestRoute(const QVec
             break;
         ordered.append(points[nearest]);
         used[nearest] = true;
+    }
+
+    // 2) 2-opt: локальный поиск — переворот отрезка [i+1..j], если сокращает длину
+    const int n = ordered.size();
+    const double eps = 1e-6;
+    bool improved = true;
+
+    while (improved) {
+        improved = false;
+        for (int i = 0; i < n - 2 && !improved; ++i) {
+            for (int j = i + 2; j < n; ++j) {
+                // Граница: после переворота [i+1..j] нужна точка j+1 для пары рёбер
+                int j1 = j + 1;
+                if (j1 >= n)
+                    continue;
+
+                double removeLen = haversineDistance(ordered[i], ordered[i + 1])
+                                + haversineDistance(ordered[j], ordered[j1]);
+                double addLen = haversineDistance(ordered[i], ordered[j])
+                              + haversineDistance(ordered[i + 1], ordered[j1]);
+
+                if (addLen < removeLen - eps) {
+                    std::reverse(ordered.begin() + i + 1, ordered.begin() + j + 1);
+                    improved = true;
+                    break;
+                }
+            }
+        }
     }
 
     return ordered;
