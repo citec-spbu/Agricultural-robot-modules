@@ -91,7 +91,9 @@ protected:
     void clearRobotLayer();
 
 private:
-    double haversineDistance(const QGV::GeoPos& pos1, const QGV::GeoPos& pos2);
+    QVector<QGV::GeoPos> reorderPointsForShortestRoute(const QVector<QGV::GeoPos>& points) const;
+
+    double haversineDistance(const QGV::GeoPos& pos1, const QGV::GeoPos& pos2) const;
     double calculateBearing(const QGV::GeoPos& start, const QGV::GeoPos& end);
     double calculateRosYaw(const QGV::GeoPos& start, const QGV::GeoPos& end);
     QPointF computeGazeboPoint(const QGV::GeoPos& start, const QGV::GeoPos& end);
@@ -140,6 +142,7 @@ private:
     bool mWaitingForRobotPos = false;
 
     QImage mRobotIcon;
+    QImage mWaypointIcon;
     QImage mArrow;
 
     QPushButton* mCreateRouteButton = nullptr;
