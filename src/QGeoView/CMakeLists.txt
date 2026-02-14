@@ -13,7 +13,7 @@ add_subdirectory(Map)
 
 if(GDAL_FOUND)
     add_subdirectory(samples/gdal-shapefile)
-    target_link_libraries(Map PRIVATE GDAL::GDAL)
+    target_link_libraries(GeoViewMap PRIVATE GDAL::GDAL)
 else()
     message(STATUS "GDAL not found, skipping gdal-shapefile example")
 endif()

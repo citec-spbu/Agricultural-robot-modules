@@ -20,7 +20,7 @@ find_package(Qt${QT_VERSION} REQUIRED COMPONENTS
     Network
 )
 
-add_executable(Map
+add_executable(GeoViewMap
     main.cpp
     GeoViewWidget.h
     GeoViewWidget.cpp
@@ -35,7 +35,10 @@ add_executable(Map
     resources.qrc
 )
 
-target_link_libraries(Map
+# Явное имя исполняемого файла (избегаем совпадения с папкой Map / map на case-insensitive ФС)
+set_target_properties(GeoViewMap PROPERTIES RUNTIME_OUTPUT_NAME GeoViewMap)
+
+target_link_libraries(GeoViewMap
     PRIVATE
     Qt${QT_VERSION}::Core
     Qt${QT_VERSION}::Network
