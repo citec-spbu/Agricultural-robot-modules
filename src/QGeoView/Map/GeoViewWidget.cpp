@@ -14,9 +14,11 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QEvent>
+#include <QPainter>
 #include <helpers.h>
 #include <rectangle.h>
 #include <optional>
+#include <limits>
 
 #include <QGeoView/QGVLayerOSM.h>
 #include <QGeoView/QGVDrawItem.h>
@@ -286,6 +288,18 @@ void GeoViewWidget::preloadImages()
 {
     //loadImage(mRobotIcon, QUrl{ "https://earth.google.com/images/kml-icons/track-directional/track-0.png" });
     mRobotIcon.load(":/icons/robot_icons/robot_icon.png");
+
+    // Маркер точки маршрута — синий круг
+    const int size = 20;
+    mWaypointIcon = QImage(size, size, QImage::Format_ARGB32);
+    mWaypointIcon.fill(Qt::transparent);
+    QPainter p(&mWaypointIcon);
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    p.setPen(QPen(QColor(50, 120, 255), 2));
+    p.setBrush(QBrush(QColor(50, 120, 255, 220)));
+    p.drawEllipse(2, 2, size - 4, size - 4);
+    p.end();
 }
 
 void GeoViewWidget::loadImage(QImage& dest, QUrl url)
@@ -664,12 +678,10 @@ void GeoViewWidget::handleMapClick(const QGV::GeoPos& pos)
 {
     auto* item = new QGVIcon();
     item->setGeometry(pos);
-    item->loadImage(mRobotIcon);
+    item->loadImage(mWaypointIcon);
     mRouteLayer->addItem(item);
 
     mRoutePoints.append(pos);
-
-    drawRoute(mRouteLayer, mRoutePoints, mRouteColor, true);
 }
 
 void GeoViewWidget::drawRoute(
@@ -698,15 +710,20 @@ void GeoViewWidget::drawRoute(
 
 void GeoViewWidget::toggleManualRouteMode()
 {
+    // Включение режима без робота — только предупреждение, ничего не строим
+    if (!mManualRouteMode && !mRobotItem.item) {
+        QMessageBox::warning(this,
+                            "Кратчайший маршрут недоступен",
+                            "Задайте позицию робота, чтобы указать маршрут вручную.");
+        return;
+    }
+
     mManualRouteMode = !mManualRouteMode;
 
     if (mManualRouteMode)
     {
-
         mRoutePoints.clear();
-
-        if(mRobotItem.item)
-            mRoutePoints.prepend(mRobotItem.pos);
+        mRoutePoints.prepend(mRobotItem.pos);
 
         if (!mRouteLayer) {
             mRouteLayer = new QGVLayer();
@@ -722,9 +739,20 @@ void GeoViewWidget::toggleManualRouteMode()
     }
     else
     {
-        QMessageBox::information(this,
-                                 "Готово",
-                                 QString("Создано %1 точек").arg(mRoutePoints.size()));
+        if (mRoutePoints.size() >= 2) {
+            mRoutePoints = reorderPointsForShortestRoute(mRoutePoints);
+            mRouteLayer->deleteItems();
+            for (int i = 1; i < mRoutePoints.size(); ++i) {
+                auto* iconItem = new QGVIcon();
+                iconItem->setGeometry(mRoutePoints[i]);
+                iconItem->loadImage(mWaypointIcon);
+                mRouteLayer->addItem(iconItem);
+            }
+            drawRoute(mRouteLayer, mRoutePoints, mRouteColor, true, true);
+            QMessageBox::information(this,
+                                     "Готово",
+                                     QString("Создано %1 точек, маршрут построен по кратчайшему пути.").arg(mRoutePoints.size()));
+        }
     }
 }
 
@@ -1064,7 +1092,43 @@ void GeoViewWidget::setMlResults(const QJsonObject& json){
     addMlResults(json);
 }
 
-double GeoViewWidget::haversineDistance(const QGV::GeoPos& start, const QGV::GeoPos& end) {
+QVector<QGV::GeoPos> GeoViewWidget::reorderPointsForShortestRoute(const QVector<QGV::GeoPos>& points) const
+{
+    if (points.size() < 2)
+        return points;
+
+    QVector<QGV::GeoPos> ordered;
+    ordered.reserve(points.size());
+    QVector<bool> used(points.size(), false);
+
+    int current = 0;
+    ordered.append(points[current]);
+    used[current] = true;
+
+    while (ordered.size() < points.size()) {
+        int nearest = -1;
+        double minDist = std::numeric_limits<double>::max();
+        const QGV::GeoPos& from = ordered.last();
+        for (int i = 0; i < points.size(); ++i) {
+            if (used[i])
+                continue;
+            double d = haversineDistance(from, points[i]);
+            if (d < minDist) {
+                minDist = d;
+                nearest = i;
+            }
+        }
+        if (nearest < 0)
+            break;
+        ordered.append(points[nearest]);
+        used[nearest] = true;
+    }
+
+    return ordered;
+}
+
+double GeoViewWidget::haversineDistance(const QGV::GeoPos& start, const QGV::GeoPos& end) const
+{
     double lat1 = qDegreesToRadians(start.latitude());
     double lat2 = qDegreesToRadians(end.latitude());
     double dLat = lat2 - lat1;
