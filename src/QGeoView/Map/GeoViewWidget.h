@@ -127,8 +127,8 @@ private:
     QVector<QGV::GeoPos> mRobotRoutePoints;
 
     QPen mContourColor = QPen(QColor(220, 60, 60, 180), 3);
-    QPen mRouteColor = QPen(QColor(50, 120, 255, 200), 2);
-    QPen mRobotRouteColor = QPen(QColor(0, 180, 70, 200), 1);
+    QPen mRouteColor = QPen(QColor(50, 120, 255, 200), 5);
+    QPen mRobotRouteColor = QPen(QColor(0, 180, 70, 200), 3);
 
     QJsonDocument* mRouteCommands = nullptr;
 

@@ -84,7 +84,9 @@ void GeoPolyline::projPaint(QPainter* p)
     else
         p->setRenderHint(QPainter::Antialiasing, true);
 
-    p->setPen(mPen);
+    QPen pen = mPen;
+    pen.setCosmetic(true);
+    p->setPen(pen);
 
     if(!drawArrowOnEnd || mProjPoints.size() < 2)
     {
