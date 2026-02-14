@@ -24,6 +24,12 @@ add_executable(GeoViewMap
     main.cpp
     GeoViewWidget.h
     GeoViewWidget.cpp
+    GeoViewDrawing.h
+    GeoViewDrawing.cpp
+    GeoViewToolbar.h
+    GeoViewToolbar.cpp
+    GeoViewRouteLogic.h
+    GeoViewRouteLogic.cpp
     GeoPolyline.h
     GeoPolyline.cpp
     Contour.h

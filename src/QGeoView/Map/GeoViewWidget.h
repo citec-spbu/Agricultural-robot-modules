@@ -1,5 +1,7 @@
 #pragma once
 #include "Contour.h"
+#include "GeoViewDrawing.h"
+#include "GeoViewToolbar.h"
 #include "ObservaionsLayer.h"
 #include "ContourPreviewDialog.h"
 
@@ -13,8 +15,6 @@
 #include <QGeoView/QGVLayer.h>
 #include <QGeoView/QGVMap.h>
 #include <qjsondocument.h>
-
-constexpr double EARTH_RADIUS_METERS = 6371000.0;
 
 class GeoViewWidget : public QWidget
 {
@@ -53,14 +53,9 @@ public:
 
     void generateParallelRoute(double stepMeters);
 
-    QVector<QGV::GeoPos> buildRouteWithAngle(double stepMeters,
-                                             double angleDegrees,
-                                             double offsetFromContour = 2.0,
-                                             double offsetCut = 2.0);
-
     void handleMapClick(const QGV::GeoPos& pos);
 
-    void drawRoute( QGVLayer* layer,
+    void drawRoute(QGVLayer* layer,
                    const QVector<QGV::GeoPos>& pts,
                    const QPen& pen = QPen(QColor(220, 60, 60, 180), 2),
                    bool drawArrow = false,
@@ -71,32 +66,16 @@ public:
 
 protected:
     inline void addObservation(const QJsonObject& RobotData);
-
-    std::optional<QGV::GeoPos> segmentIntersection(const QGV::GeoPos& a, const QGV::GeoPos& b,
-                                                   const QGV::GeoPos& c, const QGV::GeoPos& d);
-
-    QVector<QGV::GeoPos> polygonSelfIntersections(const QVector<QGV::GeoPos>& points);
-
     void addMlResults(const QJsonObject& MlResults);
-
     QJsonDocument generateGazeboJson();
 
     inline void clearMainLayer(){ if(mLayer) mLayer->deleteItems(); }
     inline void clearObservationLayer(){ if(mObservationLayer) mObservationLayer->clear(); }
-
     inline void clearRouteCommands();
-
     void clearRouteLayer();
     void clearRobotRouteLayer();
     void clearRobotLayer();
 
-private:
-    QVector<QGV::GeoPos> reorderPointsForShortestRoute(const QVector<QGV::GeoPos>& points) const;
-
-    double haversineDistance(const QGV::GeoPos& pos1, const QGV::GeoPos& pos2) const;
-    double calculateBearing(const QGV::GeoPos& start, const QGV::GeoPos& end);
-    double calculateRosYaw(const QGV::GeoPos& start, const QGV::GeoPos& end);
-    QPointF computeGazeboPoint(const QGV::GeoPos& start, const QGV::GeoPos& end);
 signals:
     void routeBuilt(const QJsonDocument& jsonDoc);
 
@@ -145,5 +124,7 @@ private:
     QImage mWaypointIcon;
     QImage mArrow;
 
-    QPushButton* mCreateRouteButton = nullptr;
+    GeoViewDrawing mDrawing;
+    GeoViewToolbar* mToolbar = nullptr;
+    QPushButton* mManualRouteButton = nullptr;
 };
