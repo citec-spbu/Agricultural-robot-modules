@@ -1,0 +1,4 @@
+src/QGeoView/build
+.qtcreator
+build
+.DS_Store
