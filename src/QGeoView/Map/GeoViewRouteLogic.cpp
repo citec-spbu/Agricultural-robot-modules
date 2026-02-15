@@ -16,7 +16,7 @@ std::optional<QGV::GeoPos> GeoViewRouteLogic::segmentIntersection(const QGV::Geo
     double x4 = d.longitude(), y4 = d.latitude();
 
     double denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-    if (denom == 0.0)
+    if (std::abs(denom) < 1e-12)
         return std::nullopt;
 
     double px = ((x1*y2 - y1*x2)*(x3-x4) - (x1-x2)*(x3*y4 - y3*x4)) / denom;
