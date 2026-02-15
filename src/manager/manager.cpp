@@ -30,7 +30,7 @@ void Manager::handle(const QString& type, const QJsonObject& json)
         lastObservationId = db->lastInsertId();
 
         if (!robotInitialized) {
-            emit initRobotPos(json);
+            emit updateRobotPos(json);
             robotInitialized = true;
         } else {
             emit updateRobotPos(json);

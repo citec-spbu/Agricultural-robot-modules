@@ -86,7 +86,6 @@ public slots:
     void removeContour();
     void showRobotCommandsJson();
 
-    void initRobotPos(const QJsonObject& json);
     void updateRobotPos(const QJsonObject& json);
     void setMlResults(const QJsonObject& json);
 

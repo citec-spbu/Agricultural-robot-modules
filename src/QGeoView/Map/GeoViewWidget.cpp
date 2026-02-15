@@ -680,22 +680,6 @@ void GeoViewWidget::addMlResults(const QJsonObject& mlResults)
     targetPoint->setMLResults(mlResults);
 }
 
-void GeoViewWidget::initRobotPos(const QJsonObject& json){
-
-    double latitude       = json.value("latitude").toDouble();
-    double longitude      = json.value("longitude").toDouble();
-    double rotation_angle = json.value("rotation_angle").toDouble();
-
-    if (latitude == 0 && longitude == 0) {
-        qWarning() << "Invalid coordinates in JSON";
-        return;
-    }
-
-    addRobot(latitude, longitude, rotation_angle);
-
-    mObservationLayer->addPoint(QGV::GeoPos(latitude, longitude));
-}
-
 void GeoViewWidget::updateRobotPos(const QJsonObject& json){
 
     double latitude       = json.value("latitude").toDouble();
