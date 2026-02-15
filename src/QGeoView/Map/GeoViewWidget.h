@@ -117,6 +117,7 @@ private:
     RobotItem mRobotItem;
 
     bool mManualRouteMode = false;
+    bool mManualRouteShortest = true; // true - кратчайший путь, false - по очереди
     bool mWaitingForRobotPos = false;
 
     QImage mRobotIcon;
