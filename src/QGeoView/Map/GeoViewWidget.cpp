@@ -13,6 +13,7 @@
 #include <QJsonObject>
 #include <QFile>
 #include <QFileDialog>
+#include <QAbstractButton>
 #include <QMessageBox>
 #include <QEvent>
 #include <QPainter>
@@ -416,15 +417,29 @@ void GeoViewWidget::toggleManualRouteMode()
     // Включение режима без робота — только предупреждение, ничего не строим
     if (!mManualRouteMode && !mRobotItem.item) {
         QMessageBox::warning(this,
-                            "Кратчайший маршрут недоступен",
-                            "Задайте позицию робота, чтобы указать маршрут вручную.");
+                             tr("Маршрут вручную недоступен"),
+                             tr("Задайте позицию робота, чтобы указать маршрут вручную."));
         return;
     }
 
-    mManualRouteMode = !mManualRouteMode;
+    if (!mManualRouteMode) {
+        // Включение режима: показываем выбор способа построения маршрута
+        QMessageBox msg(this);
+        msg.setWindowTitle(tr("Указать маршрут вручную"));
+        msg.setText(tr("Кликните по карте, чтобы добавить точки маршрута. Завершите построение кнопкой «Завершить построение маршрута»."));
+        msg.setInformativeText(tr("Как соединить точки?"));
+        QPushButton* btnShortest = msg.addButton(tr("Кратчайший"), QMessageBox::ActionRole);
+        QPushButton* btnInOrder = msg.addButton(tr("По очереди"), QMessageBox::ActionRole);
+        msg.addButton(QMessageBox::Cancel);
+        msg.exec();
 
-    if (mManualRouteMode)
-    {
+        QAbstractButton* clicked = msg.clickedButton();
+        if (clicked == msg.button(QMessageBox::Cancel))
+            return;
+
+        mManualRouteShortest = (clicked == btnShortest);
+
+        mManualRouteMode = true;
         mRoutePoints.clear();
         mRoutePoints.prepend(mRobotItem.pos);
 
@@ -432,30 +447,30 @@ void GeoViewWidget::toggleManualRouteMode()
             mRouteLayer = new QGVLayer();
             mMap->addItem(mRouteLayer);
         }
+        mRouteLayer->deleteItems();
+        return;
+    }
+
+    // Завершение режима
+    mManualRouteMode = false;
+
+    if (mRoutePoints.size() >= 2) {
+        if (mManualRouteShortest)
+            mRoutePoints = GeoViewRouteLogic::reorderPointsForShortestRoute(mRoutePoints);
 
         mRouteLayer->deleteItems();
-
-        QMessageBox::information(this,
-                                 "Режим задания траектории",
-                                 "Кликните по карте, чтобы добавить точки маршрута.\n"
-                                 "Кликните ещё раз по кнопке — чтобы завершить.");
-    }
-    else
-    {
-        if (mRoutePoints.size() >= 2) {
-            mRoutePoints = GeoViewRouteLogic::reorderPointsForShortestRoute(mRoutePoints);
-            mRouteLayer->deleteItems();
-            for (int i = 1; i < mRoutePoints.size(); ++i) {
-                auto* iconItem = new QGVIcon();
-                iconItem->setGeometry(mRoutePoints[i]);
-                iconItem->loadImage(mWaypointIcon);
-                mRouteLayer->addItem(iconItem);
-            }
-            drawRoute(mRouteLayer, mRoutePoints, mRouteColor, true, true);
-            QMessageBox::information(this,
-                                     "Готово",
-                                     QString("Создано %1 точек, маршрут построен по кратчайшему пути.").arg(mRoutePoints.size()));
+        for (int i = 1; i < mRoutePoints.size(); ++i) {
+            auto* iconItem = new QGVIcon();
+            iconItem->setGeometry(mRoutePoints[i]);
+            iconItem->loadImage(mWaypointIcon);
+            mRouteLayer->addItem(iconItem);
         }
+        drawRoute(mRouteLayer, mRoutePoints, mRouteColor, true, true);
+
+        QString finishMsg = mManualRouteShortest
+            ? tr("Создано %1 точек, маршрут построен по кратчайшему пути.").arg(mRoutePoints.size())
+            : tr("Создано %1 точек, маршрут построен в порядке указания.").arg(mRoutePoints.size());
+        QMessageBox::information(this, tr("Готово"), finishMsg);
     }
 }
 
