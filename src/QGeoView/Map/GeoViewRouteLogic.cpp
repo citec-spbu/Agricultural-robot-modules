@@ -325,27 +325,15 @@ QJsonArray GeoViewRouteLogic::buildRouteCommands(const QVector<QGV::GeoPos>& rou
         return a;
     };
 
-    for (const auto& nextPos : routePoints) {
-        double lat1 = qDegreesToRadians(prevPos.latitude());
-        double lon1 = qDegreesToRadians(prevPos.longitude());
-        double lat2 = qDegreesToRadians(nextPos.latitude());
-        double lon2 = qDegreesToRadians(nextPos.longitude());
-
-        double dLat = lat2 - lat1;
-        double dLon = lon2 - lon1;
-
-        double a = qSin(dLat/2)*qSin(dLat/2) + qCos(lat1)*qCos(lat2)*qSin(dLon/2)*qSin(dLon/2);
-        double c = 2 * qAtan2(qSqrt(a), qSqrt(1 - a));
-        double distance = EARTH_RADIUS_METERS * c;
-
+    for (const auto& nextPos : routePoints)
+    {
+        double distance = haversineDistance(prevPos, nextPos);
         if (distance < 0.2) {
             prevPos = nextPos;
             continue;
         }
 
-        double x = qSin(dLon) * qCos(lat2);
-        double y = qCos(lat1)*qSin(lat2) - qSin(lat1)*qCos(lat2)*qCos(dLon);
-        double azimuth = qRadiansToDegrees(qAtan2(x, y));
+        double azimuth = calculateBearing(prevPos, nextPos);
         if (azimuth < 0) azimuth += 360.0;
 
         double deltaAngle = normalizeAngle(azimuth - prevAngle);
