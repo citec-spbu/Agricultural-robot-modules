@@ -790,15 +790,6 @@ void GeoViewWidget::clearRobotRouteLayer()
     mDrawing.clearRobotRouteLayer(mRobotRouteLayer, mRobotRoutePoints);
 }
 
-inline void GeoViewWidget::clearRouteCommands()
-{
-    if(mRouteCommands)
-    {
-        delete mRouteCommands;
-        mRouteCommands = nullptr;
-    }
-}
-
 void GeoViewWidget::clearAll()
 {
     clearMainLayer();

@@ -71,7 +71,7 @@ protected:
 
     inline void clearMainLayer(){ if(mLayer) mLayer->deleteItems(); }
     inline void clearObservationLayer(){ if(mObservationLayer) mObservationLayer->clear(); }
-    inline void clearRouteCommands();
+    inline void clearRouteCommands() { if(mRouteCommands) { delete mRouteCommands; mRouteCommands = nullptr; } }
     void clearRouteLayer();
     void clearRobotRouteLayer();
     void clearRobotLayer();
