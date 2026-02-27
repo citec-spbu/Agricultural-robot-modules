@@ -593,6 +593,11 @@ void GeoViewWidget::addRobotOnMapFromJson(const QJsonObject& obj)
     addRobot(latitude, longitude, rotation_angle);
 
     mObservationLayer->addPoint(obj);
+
+    const double delta = 0.002;
+    QGV::GeoRect bounds(QGV::GeoPos(latitude - delta, longitude - delta),
+                        QGV::GeoPos(latitude + delta, longitude + delta));
+    mMap->cameraTo(QGVCameraActions(mMap).scaleTo(bounds));
 }
 
 void GeoViewWidget::addRobot(double latitude, double longitude, double angle)
