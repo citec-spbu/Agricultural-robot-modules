@@ -75,6 +75,7 @@ protected:
     void clearRouteLayer();
     void clearRobotRouteLayer();
     void clearRobotLayer();
+    void refreshRouteAfterRobotChange();
 
 signals:
     void routeBuilt(const QJsonDocument& jsonDoc);
@@ -83,6 +84,7 @@ public slots:
     void addContour();
     void createRoute();
     void toggleManualRouteMode();
+    void startManualRouteMode(bool shortest);
     void removeContour();
     void showRobotCommandsJson();
 
@@ -118,6 +120,7 @@ private:
 
     bool mManualRouteMode = false;
     bool mManualRouteShortest = true; // true - кратчайший путь, false - по очереди
+    bool mRouteIsParallel = false;
     bool mWaitingForRobotPos = false;
 
     QImage mRobotIcon;

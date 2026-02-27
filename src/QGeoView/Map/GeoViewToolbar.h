@@ -1,7 +1,9 @@
 #pragma once
 
+#include <QAction>
 #include <QGroupBox>
 #include <QListWidget>
+#include <QMenu>
 #include <QObject>
 #include <QPushButton>
 
@@ -19,15 +21,27 @@ public:
     /** Создаёт группу с кнопками управления. manualRouteButton — опционально, чтобы виджет мог менять текст при переключении режима. */
     QGroupBox* createOptionsList(QPushButton** manualRouteButton = nullptr);
 
-    /** Создаёт группу с информационным списком. outInfoList — указатель для обновления из виджета. */
-    QGroupBox* createInfoList(QListWidget*& outInfoList);
+    void setManualRouteMode(bool inMode);
 
 signals:
     void setInitialRobotPositionRequested();
+    void setInitialRobotPositionFromFileRequested();
     void addContourRequested();
+    void buildParallelRouteRequested();
     void buildCommandsRequested();
+    void startManualRouteShortestRequested();
+    void startManualRouteInOrderRequested();
     void toggleManualRouteRequested();
     void removeContourRequested();
     void clearAllRequested();
     void saveGazeboJsonRequested();
+
+private:
+    QPushButton* mManualRouteButton = nullptr;
+    QAction* mManualRouteShortestAction = nullptr;
+    QAction* mManualRouteInOrderAction = nullptr;
+    QAction* mManualRouteFinishAction = nullptr;
+
+public:
+    QGroupBox* createInfoList(QListWidget*& outInfoList);
 };
