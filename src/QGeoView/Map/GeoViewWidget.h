@@ -52,6 +52,7 @@ public:
     void updateInfoList();
 
     void generateParallelRoute(double stepMeters);
+    void generateParallelRouteWithAngle(double stepMeters, double angleDegrees);
 
     void handleMapClick(const QGV::GeoPos& pos);
 
@@ -76,6 +77,7 @@ protected:
     void clearRobotRouteLayer();
     void clearRobotLayer();
     void refreshRouteAfterRobotChange();
+    void buildParallelRouteFromPath(const QVector<QGV::GeoPos>& path);
 
 signals:
     void routeBuilt(const QJsonDocument& jsonDoc);

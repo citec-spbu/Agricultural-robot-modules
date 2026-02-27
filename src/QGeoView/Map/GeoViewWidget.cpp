@@ -15,6 +15,7 @@
 #include <QFileDialog>
 #include <QAbstractButton>
 #include <QMessageBox>
+#include <QInputDialog>
 #include <QEvent>
 #include <QPainter>
 #include <helpers.h>
@@ -121,8 +122,18 @@ GeoViewWidget::GeoViewWidget(QWidget* parent)
         addRobotOnMapFromJson(obj);
     });
     connect(mToolbar, &GeoViewToolbar::addContourRequested, this, &GeoViewWidget::addContour);
-    connect(mToolbar, &GeoViewToolbar::buildParallelRouteRequested, this, [this]() {
+    connect(mToolbar, &GeoViewToolbar::buildParallelRouteAutoRequested, this, [this]() {
         generateParallelRoute(4);
+    });
+    connect(mToolbar, &GeoViewToolbar::buildParallelRouteWithAngleRequested, this, [this]() {
+        bool ok = false;
+        double angle = QInputDialog::getDouble(this,
+                                               tr("Угол параллельного маршрута"),
+                                               tr("Угол в градусах (0–180):"),
+                                               0.0, -360.0, 360.0, 1, &ok);
+        if (!ok)
+            return;
+        generateParallelRouteWithAngle(4, angle);
     });
     connect(mToolbar, &GeoViewToolbar::buildCommandsRequested, this, [this]() {
         createRoute();
@@ -382,28 +393,38 @@ void GeoViewWidget::generateParallelRoute(double stepMeters)
     if (bestPath.isEmpty())
         return;
 
-    clearRouteLayer();
+    buildParallelRouteFromPath(bestPath);
+}
 
-    QPen thinPen(mRouteColor.color(), 1);
-    thinPen.setStyle(mRouteColor.style());
+void GeoViewWidget::generateParallelRouteWithAngle(double stepMeters, double angleDegrees)
+{
+    if (!mContour || mContour->points().size() < 2 || !mRouteLayer)
+        return;
 
-    QVector<QGV::GeoPos> robotToStart;
-    robotToStart.push_back(mRobotItem.pos);
-    robotToStart.push_back(bestPath.front());
-    auto* robotLine = new GeoPolyline(mMap);
-    QPen robotLinePen = thinPen;
-    robotLinePen.setStyle(Qt::DashLine);
-    robotLine->setPen(robotLinePen);
-    robotLine->points = robotToStart;
-    mRouteLayer->addItem(robotLine);
+    if (!mRobotItem.item) {
+        QMessageBox::warning(this, tr("Нет робота"),
+                             tr("Сначала разместите робота на карте, затем нажмите «Построить параллельный маршрут»."));
+        return;
+    }
 
-    auto* poly = new GeoPolyline(mMap);
-    poly->setPen(thinPen);
-    poly->points = bestPath;
-    mRouteLayer->addItem(poly);
+    QVector<QGV::GeoPos> path = GeoViewRouteLogic::buildRouteWithAngle(
+        mMap, mContour->points(), stepMeters, angleDegrees);
 
-    mRoutePoints = bestPath;
-    mRouteIsParallel = true;
+    if (path.isEmpty())
+        return;
+
+    double dxStart = mRobotItem.pos.longitude() - path.front().longitude();
+    double dyStart = mRobotItem.pos.latitude() - path.front().latitude();
+    double distStart = dxStart*dxStart + dyStart*dyStart;
+
+    double dxEnd = mRobotItem.pos.longitude() - path.back().longitude();
+    double dyEnd = mRobotItem.pos.latitude() - path.back().latitude();
+    double distEnd = dxEnd*dxEnd + dyEnd*dyEnd;
+
+    if (distEnd < distStart)
+        std::reverse(path.begin(), path.end());
+
+    buildParallelRouteFromPath(path);
 }
 
 void GeoViewWidget::removeContour()
@@ -795,6 +816,32 @@ void GeoViewWidget::clearRouteLayer()
 {
     mDrawing.clearRouteLayer(mRouteLayer, mRoutePoints, mRouteCommands);
     mRouteIsParallel = false;
+}
+
+void GeoViewWidget::buildParallelRouteFromPath(const QVector<QGV::GeoPos>& path)
+{
+    clearRouteLayer();
+
+    QPen thinPen(mRouteColor.color(), 1);
+    thinPen.setStyle(mRouteColor.style());
+
+    QVector<QGV::GeoPos> robotToStart;
+    robotToStart.push_back(mRobotItem.pos);
+    robotToStart.push_back(path.front());
+    auto* robotLine = new GeoPolyline(mMap);
+    QPen robotLinePen = thinPen;
+    robotLinePen.setStyle(Qt::DashLine);
+    robotLine->setPen(robotLinePen);
+    robotLine->points = robotToStart;
+    mRouteLayer->addItem(robotLine);
+
+    auto* poly = new GeoPolyline(mMap);
+    poly->setPen(thinPen);
+    poly->points = path;
+    mRouteLayer->addItem(poly);
+
+    mRoutePoints = path;
+    mRouteIsParallel = true;
 }
 
 void GeoViewWidget::refreshRouteAfterRobotChange()
