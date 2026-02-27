@@ -56,6 +56,26 @@ QVector<QGV::GeoPos> GeoViewRouteLogic::polygonSelfIntersections(const QVector<Q
     return intersections;
 }
 
+bool GeoViewRouteLogic::isPointInsidePolygon(const QVector<QGV::GeoPos>& polygon, const QGV::GeoPos& point)
+{
+    const int n = polygon.size();
+    if (n < 3)
+        return false;
+
+    const double px = point.longitude();
+    const double py = point.latitude();
+    int crossings = 0;
+
+    for (int i = 0, j = n - 1; i < n; j = i++) {
+        double xi = polygon[i].longitude(), yi = polygon[i].latitude();
+        double xj = polygon[j].longitude(), yj = polygon[j].latitude();
+
+        if (((yi > py) != (yj > py)) && (px < xj + (xi - xj) * (py - yj) / (yi - yj)))
+            crossings++;
+    }
+    return (crossings % 2) == 1;
+}
+
 QVector<QGV::GeoPos> GeoViewRouteLogic::buildRouteWithAngle(QGVMap* map,
                                                             const QVector<QGV::GeoPos>& contourPoints,
                                                             double stepMeters,
