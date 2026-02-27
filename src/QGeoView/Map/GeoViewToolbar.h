@@ -36,6 +36,7 @@ signals:
     void removeContourRequested();
     void clearAllRequested();
     void saveGazeboJsonRequested();
+    void saveRouteLatLonRequested();
 
 private:
     QPushButton* mManualRouteButton = nullptr;

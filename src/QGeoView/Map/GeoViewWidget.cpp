@@ -148,16 +148,46 @@ GeoViewWidget::GeoViewWidget(QWidget* parent)
     connect(mToolbar, &GeoViewToolbar::saveGazeboJsonRequested, this, [this]() {
         QJsonDocument jsonDoc = generateGazeboJson();
         if (jsonDoc.isEmpty()) return;
-        QString filename = QFileDialog::getSaveFileName(this, "Сохранить JSON", QString(), "JSON Files (*.json)");
+        QString filename = QFileDialog::getSaveFileName(this, tr("Сохранить JSON для Gazebo"), QString(), tr("JSON Files (*.json)"));
         if (!filename.isEmpty()) {
             QFile file(filename);
             if (file.open(QIODevice::WriteOnly)) {
                 file.write(jsonDoc.toJson());
                 file.close();
             } else {
-                QMessageBox::warning(this, "Ошибка", "Не удалось сохранить файл");
+                QMessageBox::warning(this, tr("Ошибка"), tr("Не удалось сохранить файл"));
             }
         }
+    });
+    connect(mToolbar, &GeoViewToolbar::saveRouteLatLonRequested, this, [this]() {
+        if (mRoutePoints.isEmpty()) {
+            QMessageBox::warning(this, tr("Нет маршрута"),
+                                 tr("Сначала постройте маршрут (параллельный или ручной), затем экспортируйте его."));
+            return;
+        }
+
+        QString filename = QFileDialog::getSaveFileName(this,
+                                                        tr("Сохранить список координат"),
+                                                        QString(),
+                                                        tr("Text Files (*.txt);;All Files (*)"));
+        if (filename.isEmpty())
+            return;
+
+        QFile file(filename);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QMessageBox::warning(this, tr("Ошибка"), tr("Не удалось сохранить файл"));
+            return;
+        }
+
+        QTextStream out(&file);
+        for (const auto& p : std::as_const(mRoutePoints)) {
+            out << QString::number(p.latitude(), 'f', 8)
+                << ", "
+                << QString::number(p.longitude(), 'f', 8)
+                << "\n";
+        }
+
+        file.close();
     });
 
     QTimer::singleShot(100, this, [this]() {
