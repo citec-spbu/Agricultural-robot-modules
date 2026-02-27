@@ -88,9 +88,14 @@ QGroupBox* GeoViewToolbar::createOptionsList(QPushButton** manualRouteButton)
     }
 
     {
-        QPushButton* button = new QPushButton("Сгенерировать json для симуляции в Gazebo");
+        QPushButton* button = new QPushButton(tr("Экспорт маршрута"));
+        QMenu* menu = new QMenu(button);
+        QAction* actGazebo = menu->addAction(tr("JSON для Gazebo"));
+        QAction* actLatLon = menu->addAction(tr("Список координат"));
+        connect(actGazebo, &QAction::triggered, this, &GeoViewToolbar::saveGazeboJsonRequested);
+        connect(actLatLon, &QAction::triggered, this, &GeoViewToolbar::saveRouteLatLonRequested);
+        button->setMenu(menu);
         groupBox->layout()->addWidget(button);
-        connect(button, &QPushButton::clicked, this, &GeoViewToolbar::saveGazeboJsonRequested);
     }
 
     return groupBox;
