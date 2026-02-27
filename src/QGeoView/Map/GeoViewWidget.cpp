@@ -23,6 +23,7 @@
 #include <limits>
 
 #include <QGeoView/QGVLayerOSM.h>
+#include <QGeoView/QGVMapQGView.h>
 #include <QGeoView/QGVDrawItem.h>
 #include <QGeoView/QGVWidgetCompass.h>
 #include <QGeoView/QGVWidgetScale.h>
@@ -95,17 +96,42 @@ GeoViewWidget::GeoViewWidget(QWidget* parent)
                                  tr("Задать позицию робота"),
                                  tr("Нажмите на карту, чтобы задать начальную позицию робота."));
     });
+    connect(mToolbar, &GeoViewToolbar::setInitialRobotPositionFromFileRequested, this, [this]() {
+        QString path = QFileDialog::getOpenFileName(this, tr("Выбрать конфиг робота"), QString(), tr("JSON (*.json);;Все файлы (*)"));
+        if (path.isEmpty())
+            return;
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly)) {
+            QMessageBox::warning(this, tr("Ошибка"), tr("Не удалось открыть файл: %1").arg(path));
+            return;
+        }
+        QByteArray data = file.readAll();
+        file.close();
+        QJsonParseError err;
+        QJsonDocument doc = QJsonDocument::fromJson(data, &err);
+        if (err.error != QJsonParseError::NoError || !doc.isObject()) {
+            QMessageBox::warning(this, tr("Ошибка"), tr("Неверный JSON: %1").arg(err.errorString()));
+            return;
+        }
+        QJsonObject obj = doc.object();
+        if (!obj.contains("latitude") || !obj.contains("longitude")) {
+            QMessageBox::warning(this, tr("Ошибка"), tr("В конфиге должны быть поля latitude и longitude (и опционально rotation_angle)."));
+            return;
+        }
+        addRobotOnMapFromJson(obj);
+    });
     connect(mToolbar, &GeoViewToolbar::addContourRequested, this, &GeoViewWidget::addContour);
+    connect(mToolbar, &GeoViewToolbar::buildParallelRouteRequested, this, [this]() {
+        generateParallelRoute(4);
+    });
     connect(mToolbar, &GeoViewToolbar::buildCommandsRequested, this, [this]() {
         createRoute();
         showRobotCommandsJson();
         qDebug() << "Маршрут и команды обновлены.";
     });
-    connect(mToolbar, &GeoViewToolbar::toggleManualRouteRequested, this, [this]() {
-        toggleManualRouteMode();
-        if (mManualRouteButton)
-            mManualRouteButton->setText(mManualRouteMode ? "Завершить построение маршрута" : "Указать маршрут вручную");
-    });
+    connect(mToolbar, &GeoViewToolbar::startManualRouteShortestRequested, this, [this]() { startManualRouteMode(true); });
+    connect(mToolbar, &GeoViewToolbar::startManualRouteInOrderRequested, this, [this]() { startManualRouteMode(false); });
+    connect(mToolbar, &GeoViewToolbar::toggleManualRouteRequested, this, &GeoViewWidget::toggleManualRouteMode);
     connect(mToolbar, &GeoViewToolbar::removeContourRequested, this, &GeoViewWidget::removeContour);
     connect(mToolbar, &GeoViewToolbar::clearAllRequested, this, &GeoViewWidget::clearAll);
     connect(mToolbar, &GeoViewToolbar::saveGazeboJsonRequested, this, [this]() {
@@ -222,6 +248,10 @@ void GeoViewWidget::loadImage(QImage& dest, QUrl url)
 
 void GeoViewWidget::addContour()
 {
+    // Контур — полигон из GeoJSON (поле/участок). Внутри него строятся параллельные линии
+    // (маршрут движения робота). Кнопка «Добавить контур» нужна для автоматического
+    // построения маршрута по полю: загружается контур → по нему генерируются параллельные
+    // полосы с заданным шагом, затем экспорт в JSON для симуляции в Gazebo.
     QString fileName = QFileDialog::getOpenFileName(this, "Выберите файл GeoJSON", "", "*.geojson");
     if (fileName.isEmpty())
         return;
@@ -332,9 +362,6 @@ void GeoViewWidget::addContour()
 
         QGV::GeoRect bounds({minLat, minLon}, {maxLat, maxLon});
         mMap->cameraTo(QGVCameraActions(mMap).scaleTo(bounds));
-
-        if(mRobotItem.item)
-            generateParallelRoute(4);
     }
 }
 
@@ -342,6 +369,12 @@ void GeoViewWidget::generateParallelRoute(double stepMeters)
 {
     if (!mContour || mContour->points().size() < 2 || !mRouteLayer)
         return;
+
+    if (!mRobotItem.item) {
+        QMessageBox::warning(this, tr("Нет робота"),
+                             tr("Сначала разместите робота на карте, затем нажмите «Построить параллельный маршрут»."));
+        return;
+    }
 
     QVector<QGV::GeoPos> bestPath = GeoViewRouteLogic::selectBestParallelRoute(
         mMap, mContour->points(), mRobotItem.pos, stepMeters);
@@ -351,22 +384,26 @@ void GeoViewWidget::generateParallelRoute(double stepMeters)
 
     clearRouteLayer();
 
+    QPen thinPen(mRouteColor.color(), 1);
+    thinPen.setStyle(mRouteColor.style());
+
     QVector<QGV::GeoPos> robotToStart;
     robotToStart.push_back(mRobotItem.pos);
     robotToStart.push_back(bestPath.front());
     auto* robotLine = new GeoPolyline(mMap);
-    QPen robotLinePen = mRouteColor;
+    QPen robotLinePen = thinPen;
     robotLinePen.setStyle(Qt::DashLine);
     robotLine->setPen(robotLinePen);
     robotLine->points = robotToStart;
     mRouteLayer->addItem(robotLine);
 
     auto* poly = new GeoPolyline(mMap);
-    poly->setPen(mRouteColor);
+    poly->setPen(thinPen);
     poly->points = bestPath;
     mRouteLayer->addItem(poly);
 
     mRoutePoints = bestPath;
+    mRouteIsParallel = true;
 }
 
 void GeoViewWidget::removeContour()
@@ -424,47 +461,15 @@ void GeoViewWidget::drawRoute(QGVLayer* layer,
 
 void GeoViewWidget::toggleManualRouteMode()
 {
-    // Включение режима без робота — только предупреждение, ничего не строим
-    if (!mManualRouteMode && !mRobotItem.item) {
-        QMessageBox::warning(this,
-                             tr("Маршрут вручную недоступен"),
-                             tr("Задайте позицию робота, чтобы указать маршрут вручную."));
+    if (!mManualRouteMode)
         return;
-    }
 
-    if (!mManualRouteMode) {
-        // Включение режима: показываем выбор способа построения маршрута
-        QMessageBox msg(this);
-        msg.setWindowTitle(tr("Указать маршрут вручную"));
-        msg.setText(tr("Кликните по карте, чтобы добавить точки маршрута. Завершите построение кнопкой «Завершить построение маршрута»."));
-        msg.setInformativeText(tr("Как соединить точки?"));
-        QPushButton* btnShortest = msg.addButton(tr("Кратчайший"), QMessageBox::ActionRole);
-        QPushButton* btnInOrder = msg.addButton(tr("По очереди"), QMessageBox::ActionRole);
-        msg.addButton(QMessageBox::Cancel);
-        msg.exec();
-
-        QAbstractButton* clicked = msg.clickedButton();
-        if (clicked == msg.button(QMessageBox::Cancel))
-            return;
-
-        mManualRouteShortest = (clicked == btnShortest);
-
-        mManualRouteMode = true;
-        mRoutePoints.clear();
-        mRoutePoints.prepend(mRobotItem.pos);
-
-        if (!mRouteLayer) {
-            mRouteLayer = new QGVLayer();
-            mMap->addItem(mRouteLayer);
-        }
-        mRouteLayer->deleteItems();
-        return;
-    }
-
-    // Завершение режима
     mManualRouteMode = false;
+    if (mToolbar)
+        mToolbar->setManualRouteMode(false);
 
     if (mRoutePoints.size() >= 2) {
+        mRouteIsParallel = false;
         if (mManualRouteShortest)
             mRoutePoints = GeoViewRouteLogic::reorderPointsForShortestRoute(mRoutePoints);
 
@@ -482,6 +487,30 @@ void GeoViewWidget::toggleManualRouteMode()
             : tr("Создано %1 точек, маршрут построен в порядке указания.").arg(mRoutePoints.size());
         QMessageBox::information(this, tr("Готово"), finishMsg);
     }
+}
+
+void GeoViewWidget::startManualRouteMode(bool shortest)
+{
+    if (!mRobotItem.item) {
+        QMessageBox::warning(this,
+                             tr("Маршрут вручную недоступен"),
+                             tr("Задайте позицию робота, чтобы указать маршрут вручную."));
+        return;
+    }
+
+    mManualRouteShortest = shortest;
+    mManualRouteMode = true;
+    mRoutePoints.clear();
+    mRoutePoints.prepend(mRobotItem.pos);
+
+    if (!mRouteLayer) {
+        mRouteLayer = new QGVLayer();
+        mMap->addItem(mRouteLayer);
+    }
+    mRouteLayer->deleteItems();
+
+    if (mToolbar)
+        mToolbar->setManualRouteMode(true);
 }
 
 void GeoViewWidget::addRobotOnMapFromMousePress(QPointF projPos)
@@ -552,9 +581,7 @@ void GeoViewWidget::addRobot(double latitude, double longitude, double angle)
 
     mObservationLayer->addPoint(mRobotItem.pos);
 
-    if(mContour && !mContour->points().empty())
-        generateParallelRoute(4);
-
+    refreshRouteAfterRobotChange();
     updateInfoList();
 }
 
@@ -617,6 +644,7 @@ void GeoViewWidget::updateRobot(double latitude, double longitude, double angle)
 
     drawRoute(mRobotRouteLayer, mRobotRoutePoints, mRobotRouteColor, true);
 
+    refreshRouteAfterRobotChange();
     updateInfoList();
 }
 
@@ -766,6 +794,39 @@ QJsonDocument GeoViewWidget::generateGazeboJson() {
 void GeoViewWidget::clearRouteLayer()
 {
     mDrawing.clearRouteLayer(mRouteLayer, mRoutePoints, mRouteCommands);
+    mRouteIsParallel = false;
+}
+
+void GeoViewWidget::refreshRouteAfterRobotChange()
+{
+    if (!mRobotItem.item || mRoutePoints.isEmpty())
+        return;
+
+    if (mRouteIsParallel) {
+        if (mContour && mContour->points().size() >= 2)
+            generateParallelRoute(4);
+        return;
+    }
+
+    mRoutePoints[0] = mRobotItem.pos;
+    if (mManualRouteShortest)
+        mRoutePoints = GeoViewRouteLogic::reorderPointsForShortestRoute(mRoutePoints);
+
+    if (mRouteLayer) {
+        mRouteLayer->deleteItems();
+        for (int i = 1; i < mRoutePoints.size(); ++i) {
+            auto* iconItem = new QGVIcon();
+            iconItem->setGeometry(mRoutePoints[i]);
+            iconItem->loadImage(mWaypointIcon);
+            mRouteLayer->addItem(iconItem);
+        }
+        drawRoute(mRouteLayer, mRoutePoints, mRouteColor, true, true);
+    }
+
+    clearRobotRouteLayer();
+    mRobotRoutePoints.append(mRobotItem.pos);
+    createRoute();
+    showRobotCommandsJson();
 }
 
 void GeoViewWidget::clearRobotLayer()
