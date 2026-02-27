@@ -395,6 +395,16 @@ void GeoViewWidget::updateInfoList()
 
 void GeoViewWidget::handleMapClick(const QGV::GeoPos& pos)
 {
+    if (mContour && mContour->points().size() >= 3) {
+        if (!GeoViewRouteLogic::isPointInsidePolygon(mContour->points(), pos)) {
+            QMessageBox::warning(this, tr("Точка вне контура"),
+                                 tr("Вы кликнули за пределами контура. Добавляйте точки маршрута только внутри контура."));
+            if (mMap && mMap->geoView())
+                mMap->geoView()->cleanState();
+            return;
+        }
+    }
+
     auto* item = new QGVIcon();
     item->setGeometry(pos);
     item->loadImage(mWaypointIcon);

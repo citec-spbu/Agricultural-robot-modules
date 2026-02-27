@@ -20,6 +20,9 @@ public:
 
     static QVector<QGV::GeoPos> polygonSelfIntersections(const QVector<QGV::GeoPos>& points);
 
+    /** Проверка, лежит ли точка внутри полигона (ray casting). */
+    static bool isPointInsidePolygon(const QVector<QGV::GeoPos>& polygon, const QGV::GeoPos& point);
+
     /** Построение параллельных линий внутри контура. */
     static QVector<QGV::GeoPos> buildRouteWithAngle(QGVMap* map,
                                                     const QVector<QGV::GeoPos>& contourPoints,
