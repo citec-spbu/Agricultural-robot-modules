@@ -726,60 +726,39 @@ void GeoViewWidget::setMlResults(const QJsonObject& json){
 }
 
 QJsonDocument GeoViewWidget::generateGazeboJson() {
-    if (!mRobotItem.item || !mRouteCommands || !mContour) {
+    if (!mRobotItem.item || !mRouteCommands) {
         QMessageBox::warning(this, "Недостаточно данных",
                              "Для построения JSON необходимо:\n"
                              "- начальное положение робота\n"
-                             "- контур точек\n"
-                             "- построенный маршрут");
+                             "- построенный маршрут (кнопка «Построить команды»)");
+        return QJsonDocument();
+    }
+
+    if (!mRouteCommands->isArray() || mRouteCommands->array().isEmpty()) {
+        QMessageBox::warning(this, "Недостаточно данных", "Маршрут пуст. Постройте команды маршрута.");
         return QJsonDocument();
     }
 
     QGV::GeoPos startPos = mRobotItem.pos;
-
-    QJsonArray pointsArray;
-    for (auto point = mContour->points().begin(); point != mContour->points().end() - 1; ++point) {
-        QPointF gazeboPoint = GeoViewRouteLogic::computeGazeboPoint(startPos, *point);
-        QJsonObject pointObj;
-        pointObj["x"] = gazeboPoint.y();
-        pointObj["y"] = -gazeboPoint.x();
-        pointObj["z"] = 0.0;
-        pointsArray.append(pointObj);
-    }
-
-    QJsonObject contourObj;
-    contourObj["points"] = pointsArray;
-
-    QJsonArray newCommands;
-    double prevYaw = 0.0;
-    auto normalizeAngleRad = [](double a) {
-        while (a > M_PI) a -= 2*M_PI;
-        while (a < -M_PI) a += 2*M_PI;
-        return a;
-    };
-
-    for (const auto& cmdVal : mRouteCommands->array()) {
-        QJsonObject cmdObj = cmdVal.toObject();
-        if (cmdObj["cmd"].toString() == "rotate") {
-            double deltaDeg = cmdObj["data"].toObject()["delta_angle"].toDouble();
-            double deltaRad = qDegreesToRadians(deltaDeg);
-
-            deltaRad = normalizeAngleRad(deltaRad);
-
-            prevYaw += deltaRad;
-
-            QJsonObject data;
-            data["delta_angle"] = qRadiansToDegrees(deltaRad);
-            cmdObj["data"] = data;
-        }
-
-        newCommands.append(cmdObj);
-    }
-
     QJsonObject rootObj;
-    rootObj["contour"] = contourObj;
-    rootObj["commands"] = newCommands;
 
+    if (mContour && mContour->points().size() >= 2) {
+        QJsonArray contourPointsArray;
+        const auto& cp = mContour->points();
+        for (int i = 0; i < cp.size() - 1; ++i) {
+            QPointF gazeboPoint = GeoViewRouteLogic::computeGazeboPoint(startPos, cp[i]);
+            QJsonObject pointObj;
+            pointObj["x"] = gazeboPoint.y();
+            pointObj["y"] = -gazeboPoint.x();
+            pointObj["z"] = 0.0;
+            contourPointsArray.append(pointObj);
+        }
+        QJsonObject contourObj;
+        contourObj["points"] = contourPointsArray;
+        rootObj["contour"] = contourObj;
+    }
+
+    rootObj["commands"] = mRouteCommands->array();
     return QJsonDocument(rootObj);
 }
 
