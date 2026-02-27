@@ -27,7 +27,8 @@ signals:
     void setInitialRobotPositionRequested();
     void setInitialRobotPositionFromFileRequested();
     void addContourRequested();
-    void buildParallelRouteRequested();
+    void buildParallelRouteAutoRequested();
+    void buildParallelRouteWithAngleRequested();
     void buildCommandsRequested();
     void startManualRouteShortestRequested();
     void startManualRouteInOrderRequested();

@@ -43,8 +43,13 @@ QGroupBox* GeoViewToolbar::createOptionsList(QPushButton** manualRouteButton)
 
     {
         QPushButton* button = new QPushButton(tr("Построить параллельный маршрут"));
+        QMenu* menu = new QMenu(button);
+        QAction* actAuto = menu->addAction(tr("Автоматически"));
+        QAction* actAngle = menu->addAction(tr("Угол вручную"));
+        connect(actAuto, &QAction::triggered, this, &GeoViewToolbar::buildParallelRouteAutoRequested);
+        connect(actAngle, &QAction::triggered, this, &GeoViewToolbar::buildParallelRouteWithAngleRequested);
+        button->setMenu(menu);
         groupBox->layout()->addWidget(button);
-        connect(button, &QPushButton::clicked, this, &GeoViewToolbar::buildParallelRouteRequested);
     }
 
     {
