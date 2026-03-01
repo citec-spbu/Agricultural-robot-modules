@@ -89,6 +89,7 @@ public slots:
     void startManualRouteMode(bool shortest);
     void removeContour();
     void showRobotCommandsJson();
+    void showRobotCommandsAsPoints();
 
     void updateRobotPos(const QJsonObject& json);
     void setMlResults(const QJsonObject& json);

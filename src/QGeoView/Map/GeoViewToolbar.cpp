@@ -53,9 +53,14 @@ QGroupBox* GeoViewToolbar::createOptionsList(QPushButton** manualRouteButton)
     }
 
     {
-        QPushButton* button = new QPushButton("Построить команды");
+        QPushButton* button = new QPushButton(tr("Построить команды"));
+        QMenu* menu = new QMenu(button);
+        QAction* actJson = menu->addAction(tr("Команды (rotate, move)"));
+        QAction* actPoints = menu->addAction(tr("Точки маршрута (широта, долгота)"));
+        connect(actJson, &QAction::triggered, this, &GeoViewToolbar::buildCommandsShowJsonRequested);
+        connect(actPoints, &QAction::triggered, this, &GeoViewToolbar::buildCommandsShowPointsRequested);
+        button->setMenu(menu);
         groupBox->layout()->addWidget(button);
-        connect(button, &QPushButton::clicked, this, &GeoViewToolbar::buildCommandsRequested);
     }
 
     {

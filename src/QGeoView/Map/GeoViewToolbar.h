@@ -29,7 +29,8 @@ signals:
     void addContourRequested();
     void buildParallelRouteAutoRequested();
     void buildParallelRouteWithAngleRequested();
-    void buildCommandsRequested();
+    void buildCommandsShowJsonRequested();
+    void buildCommandsShowPointsRequested();
     void startManualRouteShortestRequested();
     void startManualRouteInOrderRequested();
     void toggleManualRouteRequested();

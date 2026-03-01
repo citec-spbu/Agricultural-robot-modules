@@ -135,10 +135,14 @@ GeoViewWidget::GeoViewWidget(QWidget* parent)
             return;
         generateParallelRouteWithAngle(4, angle);
     });
-    connect(mToolbar, &GeoViewToolbar::buildCommandsRequested, this, [this]() {
+    connect(mToolbar, &GeoViewToolbar::buildCommandsShowJsonRequested, this, [this]() {
         createRoute();
         showRobotCommandsJson();
         qDebug() << "Маршрут и команды обновлены.";
+    });
+    connect(mToolbar, &GeoViewToolbar::buildCommandsShowPointsRequested, this, [this]() {
+        createRoute();
+        showRobotCommandsAsPoints();
     });
     connect(mToolbar, &GeoViewToolbar::startManualRouteShortestRequested, this, [this]() { startManualRouteMode(true); });
     connect(mToolbar, &GeoViewToolbar::startManualRouteInOrderRequested, this, [this]() { startManualRouteMode(false); });
@@ -735,6 +739,19 @@ void GeoViewWidget::showRobotCommandsJson()
     QString jsonString = mRouteCommands->toJson(QJsonDocument::Indented);
 
     mInfoList->addItem(jsonString);
+}
+
+void GeoViewWidget::showRobotCommandsAsPoints()
+{
+    if (!mInfoList) return;
+
+    mInfoList->clear();
+
+    for (const auto& p : std::as_const(mRoutePoints)) {
+        mInfoList->addItem(QString("%1, %2")
+                               .arg(p.latitude(), 0, 'f', 8)
+                               .arg(p.longitude(), 0, 'f', 8));
+    }
 }
 
 QJsonDocument GeoViewWidget::getRouteCommands() const
